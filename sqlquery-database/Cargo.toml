@@ -1,0 +1,27 @@
+[package]
+name = "sqlquery-database"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sqlquery-shared = { path = "../sqlquery-shared" }
+sqlquery = { path = "../sqlquery" }
+sqlx = { version = "0.5" }
+futures = { version = "0.3", default-features = false }
+thiserror = "1"
+chrono = { version = "0.4", optional = true }
+serde = { version = "1", optional = true }
+
+[dev-dependencies]
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls" ] }
+tokio = { version = "1", features = ["full"] }
+
+
+[features]
+default = ["sqlite", "postgres", "mysql", "serde"]
+sqlite = [ "sqlx/sqlite" ]
+postgres = [ "sqlx/postgres" ]
+mysql = [ "sqlx/mysql" ]
+time = ["chrono", "sqlquery-shared/time" ]

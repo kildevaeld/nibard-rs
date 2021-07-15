@@ -155,15 +155,14 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
             }
             #[cfg(feature = "mysql")]
             DatabaseTransaction::MySQL(mysql) => {
-                // let q = bind_values!(values, sqlx::query(query));
-                // q.execute(mysql)
-                //     .map_ok(|ret| QueryResult {
-                //         rows_affected: ret.rows_affected(),
-                //         last_insert_id: Some(ret.last_insert_rowid()),
-                //     })
-                //     .err_into()
-                //     .boxed()
-                unimplemented!("not implmeneted")
+                let q = bind_values!(values, sqlx::query(query));
+                q.execute(mysql)
+                    .err_into()
+                    .map_ok(|ret| QueryResult {
+                        rows_affected: ret.rows_affected(),
+                        last_insert_id: None,
+                    })
+                    .boxed()
             }
         }
     }
@@ -175,29 +174,14 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
         async move {
             match self {
                 #[cfg(feature = "postgres")]
-                DatabaseTransaction::Pg(pg) => {
-                    // let q = sqlx::query(query); //bind_values!(values, sqlx::query(query));
-                    pg.execute_many(query)
-                        .err_into()
-                        .map_ok(|ret| QueryResult {
-                            rows_affected: ret.rows_affected(),
-                            last_insert_id: None,
-                        })
-                        // .await
-                        // .map_ok(|ret| QueryResult {
-                        //     rows_affected: ret.rows_affected(),
-                        //     last_insert_id: None,
-                        // })
-                        .boxed()
-                    // q.execute_many(pg)
-                    //     .await
-                    //     .err_into()
-                    //     .map_ok(|ret| QueryResult {
-                    //         rows_affected: ret.rows_affected(),
-                    //         last_insert_id: None,
-                    //     })
-                    //     .boxed()
-                }
+                DatabaseTransaction::Pg(pg) => pg
+                    .execute_many(query)
+                    .err_into()
+                    .map_ok(|ret| QueryResult {
+                        rows_affected: ret.rows_affected(),
+                        last_insert_id: None,
+                    })
+                    .boxed(),
                 #[cfg(feature = "sqlite")]
                 DatabaseTransaction::Sqlite(sqlite) => {
                     let q = sqlx::query(query);
@@ -211,18 +195,14 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
                         .boxed()
                 }
                 #[cfg(feature = "mysql")]
-                DatabaseTransaction::MySQL(mysql) => {
-                    // let q = sqlx::query(query);
-                    // q.execute_many(mysql)
-                    //     .await
-                    //     .map_ok(|ret| QueryResult {
-                    //         rows_affected: ret.rows_affected(),
-                    //         last_insert_id: Some(ret.last_insert_rowid()),
-                    //     })
-                    //     .err_into()
-                    //     .boxed()
-                    unimplemented!("")
-                }
+                DatabaseTransaction::MySQL(mysql) => mysql
+                    .execute_many(query)
+                    .err_into()
+                    .map_ok(|ret| QueryResult {
+                        rows_affected: ret.rows_affected(),
+                        last_insert_id: None,
+                    })
+                    .boxed(),
             }
         }
         .boxed()

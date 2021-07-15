@@ -12,12 +12,6 @@ mod table;
 mod target;
 mod types;
 
-// #[cfg(feature = "sqlx")]
-// mod ext_sqlx;
-
-// #[cfg(feature = "sqlx")]
-// pub use ext_sqlx::*;
-
 pub use self::{
     column::*, column_ext::*, context::*, error::*, expression::*, filter::*, join::*, select::*,
     selection::*, statement::*, table::*, target::*, types::*,

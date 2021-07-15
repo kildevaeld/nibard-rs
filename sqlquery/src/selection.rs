@@ -1,5 +1,6 @@
 use super::{Column, Context, Error, Target};
 use std::fmt::Write;
+
 pub trait Selection {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
 }
@@ -21,12 +22,6 @@ macro_rules! selection {
             }
         }
 
-        // impl<$first: Col> ToSql for $first {
-        //     fn build(&self, ctx: &mut BuildCtx) -> Result<(), $crate::Error> {
-        //         ctx.write_str(self.name())?;
-        //         Ok(())
-        //     }
-        // }
     };
     ($n1: tt => $type1:ident, $( $n: tt => $type:ident  ),*) => {
         selection!($($n => $type),*);
@@ -43,7 +38,6 @@ macro_rules! selection {
                 Ok(())
             }
         }
-        // impl<$type1: Col, $( $type: Col ),*> Selection for ($type1, $($type),*)  {}
     };
 }
 

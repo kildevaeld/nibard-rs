@@ -55,61 +55,14 @@ where
     }
 }
 
-// pub struct SelectFilter<S, E>(S, E)
-// where
-//     S: Select,
-//     E: Expression;
-
-// pub trait SelectFilter: Select {
-//     type Expression: Expression;
-// }
-
-// pub struct SelFil<S: Select, E: Expression>(S, E);
-
-// impl<S: Select, E: Expression> Select for SelFil<S, E> {
-//     type Target = S::Target;
-//     type Selection = S::Selection;
-// }
-
-// impl<S: Select, E: Expression> SelectFilter for SelFil<S, E> {
-//     type Expression = E;
-// }
-
-// impl<T, S> Select for (T, S)
-// where
-//     T: Target,
-//     S: Selection,
-// {
-//     type Target = T;
-//     type Selection = S;
-//     fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-//         ctx.write_str("SELECT ")?;
-//         self.1.build(ctx)?;
-//         ctx.write_str(" FROM ")?;
-//         self.0.build(ctx)?;
-//         Ok(())
-//     }
-// }
-
-// impl<S, E> Select for (S, E)
-// where
-//     S: Select,
-//     E: Expression,
-// {
-//     type Target = S::Target;
-//     type Selection = S::Selection;
-// }
-
-// impl<S, E> SelectFilter for (S, E)
-// where
-//     S: Select,
-//     E: Expression,
-// {
-//     type Expression = E;
-// }
-
 impl<T: Target, S: Selection> Statement for Sel<T, S> {
     fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
         <Sel<T, S> as Select>::build(self, ctx)
+    }
+}
+
+impl<S: Select, J: Joinable> Statement for JoinSelect<S, J> {
+    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
+        <JoinSelect<S, J> as Select>::build(self, ctx)
     }
 }

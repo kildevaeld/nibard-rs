@@ -124,30 +124,46 @@ impl DatabaseKind {
     }
 }
 
-impl<'a> Executor<'a> for &'a DatabaseKind {
+impl<'c> Executor<'c> for &'c DatabaseKind {
     fn dialect(&self) -> Dialect {
         (&**self).dialect()
     }
-    fn fetch_one(
+    fn fetch_one<'e, 'q, E>(
         self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> futures::future::BoxFuture<'a, Result<DatabaseRow, Error>> {
+        execute: E,
+    ) -> futures::future::BoxFuture<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         let fut = async move {
             let row = match self {
                 #[cfg(feature = "postgres")]
                 DatabaseKind::Pg(pg) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    let mut q = sqlx::query(execute.sql());
+                    if let Some(values) = execute.args() {
+                        q = bind_values!(values, q);
+                    }
+                    // let q = bind_values!(values, sqlx::query(query));
                     q.fetch_one(pg).await.map(DatabaseRow::Pg)?
                 }
                 #[cfg(feature = "mysql")]
                 DatabaseKind::MySQL(pg) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    let mut q = sqlx::query(execute.sql());
+                    if let Some(values) = execute.args() {
+                        q = bind_values!(values, q);
+                    }
+                    // let q = bind_values!(values, sqlx::query(query));
                     q.fetch_one(pg).await.map(DatabaseRow::MySQL)?
                 }
                 #[cfg(feature = "sqlite")]
                 DatabaseKind::Sqlite(sqlite) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    // let q = bind_values!(values, sqlx::query(query));
+                    let mut q = sqlx::query(execute.sql());
+                    if let Some(values) = execute.args() {
+                        q = bind_values!(values, q);
+                    }
                     q.fetch_one(sqlite).await.map(DatabaseRow::Sqlite)?
                 }
             };
@@ -158,15 +174,16 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
         Box::pin(fut)
     }
 
-    fn fetch(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxStream<'a, Result<DatabaseRow, Error>> {
+    fn fetch<'e, 'q, E>(self, execute: E) -> BoxStream<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         let row = match self {
             #[cfg(feature = "postgres")]
             DatabaseKind::Pg(pg) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(pg)
                     .map_ok(|pg| DatabaseRow::Pg(pg))
                     .err_into()
@@ -174,7 +191,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
             }
             #[cfg(feature = "sqlite")]
             DatabaseKind::Sqlite(sqlite) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(sqlite)
                     .map_ok(|sqlite| DatabaseRow::Sqlite(sqlite))
                     .err_into()
@@ -182,7 +199,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
             }
             #[cfg(feature = "mysql")]
             DatabaseKind::MySQL(pg) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(pg)
                     .map_ok(|pg| DatabaseRow::MySQL(pg))
                     .err_into()
@@ -192,16 +209,16 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
         row
         //Box::pin(row.err_into())
     }
-
-    fn execute(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxFuture<'a, Result<QueryResult, Error>> {
+    fn execute<'e, 'q, E>(self, execute: E) -> BoxFuture<'e, Result<QueryResult, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         match self {
             #[cfg(feature = "postgres")]
             DatabaseKind::Pg(pg) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(pg)
                     .err_into()
                     .map_ok(|ret| QueryResult {
@@ -212,7 +229,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
             }
             #[cfg(feature = "sqlite")]
             DatabaseKind::Sqlite(sqlite) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(sqlite)
                     .map_ok(|ret| QueryResult {
                         rows_affected: ret.rows_affected(),
@@ -223,7 +240,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
             }
             #[cfg(feature = "mysql")]
             DatabaseKind::MySQL(mysql) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(mysql)
                     .err_into()
                     .map_ok(|ret| QueryResult {
@@ -234,16 +251,20 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
             }
         }
     }
-
-    fn execute_many(
+    fn execute_many<'e, 'q, E>(
         self,
-        query: &'a str,
-    ) -> BoxFuture<'a, BoxStream<'a, Result<QueryResult, Error>>> {
+        execute: E,
+    ) -> BoxFuture<'e, BoxStream<'e, Result<QueryResult, Error>>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         async move {
             match self {
                 #[cfg(feature = "postgres")]
                 DatabaseKind::Pg(pg) => {
-                    let q = sqlx::query(query);
+                    let q = query_and_bind!(execute);
                     q.execute_many(pg)
                         .await
                         .err_into()
@@ -255,7 +276,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
                 }
                 #[cfg(feature = "sqlite")]
                 DatabaseKind::Sqlite(sqlite) => {
-                    let q = sqlx::query(query);
+                    let q = query_and_bind!(execute);
                     q.execute_many(sqlite)
                         .await
                         .map_ok(|ret| QueryResult {
@@ -267,7 +288,7 @@ impl<'a> Executor<'a> for &'a DatabaseKind {
                 }
                 #[cfg(feature = "mysql")]
                 DatabaseKind::MySQL(mysql) => {
-                    let q = sqlx::query(query);
+                    let q = query_and_bind!(execute);
                     q.execute_many(mysql)
                         .await
                         .map_ok(|ret| QueryResult {
@@ -306,37 +327,48 @@ impl Database {
     }
 }
 
-impl<'a> Executor<'a> for &'a Database {
+impl<'c> Executor<'c> for &'c Database {
     fn dialect(&self) -> Dialect {
         self.kind.dialect()
     }
-    fn fetch_one(
+    fn fetch_one<'e, 'q, E>(
         self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> futures::future::BoxFuture<'a, Result<DatabaseRow, Error>> {
-        self.kind.fetch_one(query, values)
+        execute: E,
+    ) -> futures::future::BoxFuture<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
+        self.kind.fetch_one(execute)
     }
 
-    fn fetch(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxStream<'a, Result<DatabaseRow, Error>> {
-        self.kind.fetch(query, values)
+    fn fetch<'e, 'q, E>(self, execute: E) -> BoxStream<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
+        self.kind.fetch(execute)
     }
 
-    fn execute(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxFuture<'a, Result<QueryResult, Error>> {
-        self.kind.execute(query, values)
+    fn execute<'e, 'q, E>(self, e: E) -> BoxFuture<'e, Result<QueryResult, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
+        self.kind.execute(e)
     }
-    fn execute_many(
+    fn execute_many<'e, 'q, E>(
         self,
-        query: &'a str,
-    ) -> BoxFuture<'a, BoxStream<'a, Result<QueryResult, Error>>> {
-        self.kind.execute_many(query)
+        execute: E,
+    ) -> BoxFuture<'e, BoxStream<'e, Result<QueryResult, Error>>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
+        self.kind.execute_many(execute)
     }
 }

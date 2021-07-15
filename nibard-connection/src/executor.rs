@@ -8,33 +8,55 @@ pub struct QueryResult {
     pub last_insert_id: Option<i64>,
 }
 
-pub trait Executor<'a> {
+pub trait Executor<'c> {
     fn dialect(&self) -> Dialect;
 
-    fn fetch_one(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> futures::future::BoxFuture<'a, Result<DatabaseRow, Error>>;
+    fn fetch_one<'e, 'q, E>(self, execute: E) -> BoxFuture<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>;
 
-    fn fetch(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxStream<'a, Result<DatabaseRow, Error>>;
+    fn fetch<'e, 'q, E>(self, execute: E) -> BoxStream<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>;
 
-    fn execute(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxFuture<'a, Result<QueryResult, Error>>;
+    fn execute<'e, 'q, E>(self, e: E) -> BoxFuture<'e, Result<QueryResult, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>;
 
-    fn execute_many(
+    fn execute_many<'e, 'q, E>(
         self,
-        query: &'a str,
-    ) -> BoxFuture<'a, BoxStream<'a, Result<QueryResult, Error>>>;
+        e: E,
+    ) -> BoxFuture<'e, BoxStream<'e, Result<QueryResult, Error>>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>;
 }
 
-pub trait Execute<'q> {
+pub trait Execute<'q>: Send {
     fn sql(&self) -> &'q str;
+    fn args(&self) -> Option<&'q [Value]> {
+        None
+    }
+}
+
+impl<'q> Execute<'q> for &'q str {
+    fn sql(&self) -> &'q str {
+        self
+    }
+}
+
+impl<'q> Execute<'q> for (&'q str, &'q [Value]) {
+    fn sql(&self) -> &'q str {
+        self.0
+    }
+    fn args(&self) -> Option<&'q [Value]> {
+        Some(&self.1)
+    }
 }

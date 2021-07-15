@@ -19,7 +19,7 @@ impl<'a> Query<'a> {
     where
         'a: 'c,
     {
-        e.fetch(&self.sql, &self.values)
+        e.fetch((self.sql.as_ref(), self.values.as_slice()))
     }
 
     pub async fn fetch_one<'e, 'c: 'e, E: Executor<'c>>(
@@ -29,7 +29,8 @@ impl<'a> Query<'a> {
     where
         'a: 'c,
     {
-        e.fetch_one(&self.sql, &self.values).await
+        e.fetch_one((self.sql.as_ref(), self.values.as_slice()))
+            .await
     }
 }
 

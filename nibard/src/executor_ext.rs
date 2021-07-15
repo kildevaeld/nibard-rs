@@ -1,0 +1,25 @@
+use super::query2::{Query, StatementQuery};
+use futures::{
+    future::{BoxFuture, FutureExt},
+    stream::{BoxStream, StreamExt},
+};
+use nibard_connection::{DatabaseRow, Error, Executor};
+use nibard_query::Statement;
+
+pub trait ExecutorExt<'c>: Executor<'c> + Send {
+    fn query<S: Statement>(self, stmt: S) -> BoxStream<'c, Result<DatabaseRow, Error>>
+    where
+        Self: Sized + 'c,
+    {
+        stmt.to_query(self.dialect()).fetch(self).boxed()
+    }
+
+    fn query_one<S: Statement>(self, stmt: S) -> BoxFuture<'c, Result<DatabaseRow, Error>>
+    where
+        Self: Sized + 'c,
+    {
+        stmt.to_query(self.dialect()).fetch_one(self).boxed()
+    }
+}
+
+impl<'c, E> ExecutorExt<'c> for E where E: Executor<'c> + Send {}

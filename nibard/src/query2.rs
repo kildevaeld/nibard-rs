@@ -1,10 +1,9 @@
+use async_stream::stream;
 use futures::Stream;
-use nibard_connection::{DatabaseRow, Error, Executor};
+use nibard_connection::{DatabaseRow, Error, Execute, Executor};
 use nibard_query::{build, Statement};
 use nibard_shared::{Dialect, Value};
-// use sqlx::query::QueryAs;
-use async_stream::stream;
-use std::borrow::Cow;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Query {
     sql: String,
@@ -12,16 +11,6 @@ pub struct Query {
 }
 
 impl Query {
-    // pub fn fetch<'e, 'c: 'e, E: Executor<'c>>(
-    //     &'a self,
-    //     e: E,
-    // ) -> impl Stream<Item = Result<DatabaseRow, Error>> + 'e
-    // where
-    //     'a: 'c,
-    // {
-    //     e.fetch(&self.sql, &self.values)
-    // }
-
     pub fn fetch<'e, 'c: 'e, E: Executor<'c>>(
         self,
         e: E,
@@ -29,10 +18,8 @@ impl Query {
     where
         E: 'c,
     {
-        let sql = self.sql;
-        let values = self.values;
         stream! {
-            let stream = e.fetch(&sql, &values);
+            let stream = e.fetch(&self);
 
             for await value in stream {
                 yield value
@@ -40,21 +27,28 @@ impl Query {
         }
     }
 
-    // pub fn fetch_one<'e, E: Executor<'e>>(self, e: E) -> Result<DatabaseRow, Error>
-    // where
-    //     Self: 'e,
-    // {
-    //     e.fetch_one(&self.sql, &self.values).await
-    // }
+    pub async fn fetch_one<'e, E: Executor<'e>>(self, e: E) -> Result<DatabaseRow, Error>
+    where
+        Self: 'e,
+    {
+        e.fetch_one(&self).await
+    }
+}
+
+impl<'q> Execute<'q> for &'q Query {
+    fn sql(&self) -> &'q str {
+        &self.sql
+    }
+
+    fn args(&self) -> Option<&'q [Value]> {
+        Some(&self.values)
+    }
 }
 
 pub trait StatementQuery: Statement + Sized {
     fn to_query(self, dialect: Dialect) -> Query {
         let (sql, values) = build(dialect, self).unwrap();
-        Query {
-            sql: sql.into(),
-            values,
-        }
+        Query { sql, values }
     }
 }
 

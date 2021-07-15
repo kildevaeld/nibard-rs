@@ -4,7 +4,7 @@ mod list;
 use clap::App;
 use futures::TryStreamExt;
 use nibard::{Database, Executor};
-
+use tokio::io::AsyncWriteExt;
 async fn create_schema(db: &Database) -> Result<(), Box<dyn std::error::Error>> {
     let mut ctx = db.begin().await?;
 
@@ -22,6 +22,15 @@ async fn create_schema(db: &Database) -> Result<(), Box<dyn std::error::Error>> 
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if tokio::fs::metadata("./todos.sqlite").await.is_err() {
+        let mut file = tokio::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open("./todos.sqlite")
+            .await?;
+        file.flush().await?;
+    }
+
     let db = Database::open("sqlite:./todos.sqlite").await?;
 
     create_schema(&db).await?;

@@ -26,3 +26,13 @@ macro_rules! bind_values {
         query
     }};
 }
+
+macro_rules! query_and_bind {
+    ($exec: expr) => {{
+        let mut q = sqlx::query($exec.sql());
+        if let Some(values) = $exec.args() {
+            q = bind_values!(values, q);
+        }
+        q
+    }};
+}

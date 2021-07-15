@@ -34,3 +34,7 @@ pub trait Executor<'a> {
         query: &'a str,
     ) -> BoxFuture<'a, BoxStream<'a, Result<QueryResult, Error>>>;
 }
+
+pub trait Execute<'q> {
+    fn sql(&self) -> &'q str;
+}

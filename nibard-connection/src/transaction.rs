@@ -7,7 +7,7 @@ use futures::{
     future::{BoxFuture, FutureExt, TryFutureExt},
     stream::{BoxStream, StreamExt, TryStreamExt},
 };
-use sqlquery_shared::{Dialect, Value};
+use nibard_shared::{Dialect, Value};
 use sqlx::Executor as SqlxExecutor;
 
 pub enum DatabaseTransaction<'c> {

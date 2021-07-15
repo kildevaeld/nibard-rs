@@ -2,7 +2,7 @@
 
 
 members = [
-    "sqlquery",
-    "sqlquery-shared",
-    "sqlquery-database"
+    "nibard-query",
+    "nibard-shared",
+    "nibard-connection"
 ]

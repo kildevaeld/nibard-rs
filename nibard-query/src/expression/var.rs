@@ -1,6 +1,6 @@
 use super::{Expression, IntoExpression};
 use crate::{Context, Error};
-use sqlquery_shared::{Value, ValueRef};
+use nibard_shared::{Value, ValueRef};
 
 pub struct VarExpr {
     value: Value,

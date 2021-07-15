@@ -1,13 +1,13 @@
 [package]
-name = "sqlquery-database"
+name = "nibard-connection"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sqlquery-shared = { path = "../sqlquery-shared" }
-sqlquery = { path = "../sqlquery" }
+nibard-shared = { path = "../nibard-shared" }
+nibard-query = { path = "../nibard-query" }
 sqlx = { version = "0.5" }
 futures = { version = "0.3", default-features = false }
 thiserror = "1"
@@ -24,4 +24,4 @@ default = ["sqlite", "postgres", "mysql", "serde"]
 sqlite = [ "sqlx/sqlite" ]
 postgres = [ "sqlx/postgres" ]
 mysql = [ "sqlx/mysql" ]
-time = ["chrono", "sqlquery-shared/time" ]
+time = ["chrono", "nibard-shared/time" ]

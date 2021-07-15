@@ -1,5 +1,5 @@
 [package]
-name = "sqlquery"
+name = "nibard-query"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1"
-sqlquery-shared = { path = "../sqlquery-shared" }
+nibard-shared = { path = "../nibard-shared" }
 # sqlx = { version = "0.5", optional = true }
 
 # [features]

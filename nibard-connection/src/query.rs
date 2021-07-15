@@ -1,7 +1,7 @@
 use super::{DatabaseRow, Error, Executor};
 use futures::Stream;
-use sqlquery::{build, Statement};
-use sqlquery_shared::{Dialect, Value};
+use nibard_query::{build, Statement};
+use nibard_shared::{Dialect, Value};
 // use sqlx::query::QueryAs;
 use std::borrow::Cow;
 use std::marker::PhantomData;

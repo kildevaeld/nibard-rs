@@ -2,7 +2,7 @@ pub use super::{error::*, executor::*, row::*, transaction::*};
 use futures::{
     future::BoxFuture, stream::BoxStream, FutureExt, StreamExt, TryFutureExt, TryStreamExt,
 };
-use sqlquery_shared::{Dialect, Value};
+use nibard_shared::{Dialect, Value};
 use std::str::FromStr;
 
 pub enum ConnectOptions {

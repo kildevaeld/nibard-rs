@@ -20,13 +20,13 @@ pub use self::{
 #[cfg(test)]
 mod test {
     use super::*;
-    use sqlquery_shared::Dialect;
+    use nibard_shared::Dialect;
 
     #[test]
     fn test() {
         // let mut output = String::default();
         // {
-        //     let ctx = Context::new(sqlquery_shared::Dialect::Sqlite, &mut output);
+        //     let ctx = Context::new(nibard_shared::Dialect::Sqlite, &mut output);
         // let select = "todos"
         //     .select(("id", "label", "description"))
         //     .filter("test".eql("test"));

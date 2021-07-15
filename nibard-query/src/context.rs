@@ -1,5 +1,5 @@
 use super::{Error, Statement};
-use sqlquery_shared::{Dialect, Value};
+use nibard_shared::{Dialect, Value};
 use std::fmt::{self, Write as _};
 
 pub struct Context<'a> {

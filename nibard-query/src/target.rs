@@ -6,20 +6,6 @@ pub trait Target {
 }
 
 pub trait TargetExt<S: Selection>: Target + Sized {
-    // fn select<'a, S: Selection + 'a>(self, selection: S) -> Select<'a>
-    // where
-    //     Self: 'a,
-    // {
-    //     Select {
-    //         table: Box::new(self),
-    //         columns: Box::new(selection),
-    //         filters: None,
-    //         joins: Vec::default(),
-    //         limit: None,
-    //         offset: None,
-    //         order_by: None,
-    //     }
-    // }
     type Select: Select<Target = Self>;
     fn select(self, selection: S) -> Self::Select;
 }
@@ -40,7 +26,6 @@ macro_rules! selection {
         impl<$first: Table> Target for $first {
             fn build(&self, ctx: &mut Context) -> Result<(), Error> {
                 <$first as Table>::build(self, ctx)?;
-                // ctx.write_str(self.name())?;
                 Ok(())
             }
         }
@@ -51,12 +36,9 @@ macro_rules! selection {
 
         impl<$type1: Table, $( $type: Table ),*> Target for ($type1, $($type),*)  {
             fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-                // ctx.write_str(self.$n1.name())?;
                 self.$n1.build(ctx)?;
                 $(
                     ctx.write_str(", ")?;
-                    // ctx.write_str(self.$n.name())?;
-                    // self.from_clause(self.$n.)
                     self.$n.build(ctx)?;
                 )*
                 Ok(())

@@ -1,6 +1,4 @@
 use crate::{Context, Error};
-use sqlquery_shared::Value;
-use std::fmt::Write as _;
 
 pub trait Expression {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;

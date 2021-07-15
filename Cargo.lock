@@ -563,6 +563,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "nibard-connection"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "futures",
+ "nibard-query",
+ "nibard-shared",
+ "serde",
+ "sqlx",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "nibard-query"
+version = "0.1.0"
+dependencies = [
+ "nibard-shared",
+ "thiserror",
+]
+
+[[package]]
+name = "nibard-shared"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
 name = "nom"
 version = "6.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1032,36 +1062,6 @@ dependencies = [
  "nom",
  "regex",
  "unicode_categories",
-]
-
-[[package]]
-name = "sqlquery"
-version = "0.1.0"
-dependencies = [
- "sqlquery-shared",
- "thiserror",
-]
-
-[[package]]
-name = "sqlquery-database"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "futures",
- "serde",
- "sqlquery",
- "sqlquery-shared",
- "sqlx",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "sqlquery-shared"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
 ]
 
 [[package]]

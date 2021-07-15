@@ -1,4 +1,4 @@
-use super::{Expression, IntoExpression};
+use super::Expression;
 use crate::{Context, Error};
 use std::fmt::Write as _;
 

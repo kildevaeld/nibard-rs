@@ -23,7 +23,7 @@ pub use self::{database::*, executor::*, query::*, query::*, row::*, transaction
 #[cfg(test)]
 mod test {
     use super::*;
-    use sqlquery::*;
+    use nibard_query::*;
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn test() {
         let db = Database::open("sqlite::memory:").await.expect("sqlite");

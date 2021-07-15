@@ -1,7 +1,7 @@
 use super::Error;
 #[cfg(feature = "time")]
 use chrono::NaiveDateTime;
-use sqlquery_shared::Value;
+use nibard_shared::Value;
 use sqlx::{Column as _, Row as SqlxRow, TypeInfo, ValueRef as SqlxValueRef};
 
 pub enum DatabaseRow {

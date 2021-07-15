@@ -1,7 +1,7 @@
 use super::error::*;
 use super::row::DatabaseRow;
 use futures::{future::BoxFuture, stream::BoxStream};
-use sqlquery_shared::{Dialect, Value};
+use nibard_shared::{Dialect, Value};
 
 pub struct QueryResult {
     pub rows_affected: u64,

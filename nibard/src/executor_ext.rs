@@ -1,4 +1,4 @@
-use super::query2::{Query, StatementQuery};
+use super::query::StatementQuery;
 use futures::{
     future::{BoxFuture, FutureExt},
     stream::{BoxStream, StreamExt},

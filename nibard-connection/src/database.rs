@@ -43,6 +43,11 @@ impl ConnectOptions {
 
         Ok(kind)
     }
+
+    pub async fn open(self) -> Result<Database, Error> {
+        let kind = self.build().await?;
+        Ok(Database { kind })
+    }
 }
 
 fn get_dialect(n: &str) -> Result<Dialect, Error> {

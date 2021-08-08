@@ -22,9 +22,6 @@ mod executor;
 mod row;
 mod transaction;
 
-// #[cfg(feature = "serde")]
-// mod de;
-
 pub use self::{database::*, executor::*, row::*, transaction::*};
 
 // #[cfg(test)]

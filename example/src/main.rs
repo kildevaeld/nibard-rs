@@ -1,5 +1,6 @@
 mod create;
 mod list;
+mod script;
 
 use clap::App;
 use futures::TryStreamExt;
@@ -38,12 +39,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = App::new("todos")
         .subcommand(list::make())
         .subcommand(create::make())
+        .subcommand(script::make())
         .get_matches();
 
     if let Some(matches) = app.subcommand_matches("list") {
         list::run(&db).await?;
     } else if let Some(matches) = app.subcommand_matches("create") {
         create::run(&db).await?;
+    } else if let Some(matches) = app.subcommand_matches("script") {
+        script::run(&db, matches).await?;
     }
 
     Ok(())

@@ -5,6 +5,7 @@ members = [
     "nibard-query",
     "nibard-shared",
     "nibard-connection",
+    "nibard-lua",
     "nibard",
     "example"
 ]

@@ -6,15 +6,19 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nibard-shared = { path = "../nibard-shared" }
+nibard-shared = { path = "../nibard-shared", features = [ "serde" ] }
 nibard-query = { path = "../nibard-query" }
 nibard-connection = { path = "../nibard-connection" }
 futures = {version = "0.3"}
 async-stream = "0.3"
 
 [features]
-default = ["sqlite", "postgres", "mysql"]
+default = [ ]
 sqlite = [ "nibard-connection/sqlite" ]
 postgres = [ "nibard-connection/postgres" ]
 mysql = [ "nibard-connection/mysql" ]
 time = ["nibard-connection/time" ]
+runtime-tokio-rustls = ["nibard-connection/runtime-tokio-rustls"]
+runtime-async-std-native-tls = ["nibard-connection/runtime-async-std-native-tls"]
+runtime-tokio-native-tls = ["nibard-connection/runtime-tokio-native-tls"]
+runtime-async-std-rustls = ["nibard-connection/runtime-async-std-rustls"]

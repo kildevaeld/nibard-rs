@@ -12,16 +12,14 @@ sqlx = { version = "0.5" }
 futures = { version = "0.3", default-features = false }
 thiserror = "1"
 chrono = { version = "0.4", optional = true }
-serde = { version = "1", optional = true }
-
-[dev-dependencies]
-sqlx = { version = "0.5", features = [ "runtime-tokio-rustls" ] }
-tokio = { version = "1", features = ["full"] }
-
 
 [features]
-default = ["sqlite", "postgres", "mysql", "serde"]
+default = [ ]
 sqlite = [ "sqlx/sqlite" ]
 postgres = [ "sqlx/postgres" ]
 mysql = [ "sqlx/mysql" ]
 time = ["chrono", "nibard-shared/time" ]
+runtime-tokio-rustls = ["sqlx/runtime-tokio-rustls"]
+runtime-async-std-native-tls = ["sqlx/runtime-async-std-native-tls"]
+runtime-tokio-native-tls = ["sqlx/runtime-tokio-native-tls"]
+runtime-async-std-rustls = ["sqlx/runtime-async-std-rustls"]

@@ -1,6 +1,6 @@
 pub use super::{
     error::*,
-    executor::{Executor, QueryResult},
+    executor::{Execute, Executor, QueryResult},
     row::DatabaseRow,
 };
 use futures::{
@@ -8,7 +8,6 @@ use futures::{
     stream::{BoxStream, StreamExt, TryStreamExt},
 };
 use nibard_shared::{Dialect, Value};
-use sqlx::Executor as SqlxExecutor;
 
 pub enum DatabaseTransaction<'c> {
     #[cfg(feature = "postgres")]
@@ -57,30 +56,34 @@ impl<'c> DatabaseTransaction<'c> {
     }
 }
 
-impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
+impl<'c, 't> Executor<'c> for &'c mut DatabaseTransaction<'t> {
     fn dialect(&self) -> Dialect {
         (&**self).dialect()
     }
-    fn fetch_one(
+    fn fetch_one<'e, 'q, E>(
         self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> futures::future::BoxFuture<'a, Result<DatabaseRow, Error>> {
+        execute: E,
+    ) -> futures::future::BoxFuture<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         let fut = async move {
             let row = match self {
                 #[cfg(feature = "postgres")]
                 DatabaseTransaction::Pg(pg) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    let q = query_and_bind!(execute);
                     q.fetch_one(pg).await.map(DatabaseRow::Pg)?
                 }
                 #[cfg(feature = "sqlite")]
                 DatabaseTransaction::Sqlite(sqlite) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    let q = query_and_bind!(execute);
                     q.fetch_one(sqlite).await.map(DatabaseRow::Sqlite)?
                 }
                 #[cfg(feature = "mysql")]
                 DatabaseTransaction::MySQL(mysql) => {
-                    let q = bind_values!(values, sqlx::query(query));
+                    let q = query_and_bind!(execute);
                     q.fetch_one(mysql).await.map(DatabaseRow::MySQL)?
                 }
             };
@@ -91,15 +94,16 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
         Box::pin(fut)
     }
 
-    fn fetch(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxStream<'a, Result<DatabaseRow, Error>> {
+    fn fetch<'e, 'q, E>(self, execute: E) -> BoxStream<'e, Result<DatabaseRow, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         let row = match self {
             #[cfg(feature = "postgres")]
             DatabaseTransaction::Pg(pg) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(pg)
                     .map_ok(|pg| DatabaseRow::Pg(pg))
                     .err_into()
@@ -107,7 +111,7 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
             }
             #[cfg(feature = "sqlite")]
             DatabaseTransaction::Sqlite(sqlite) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(sqlite)
                     .map_ok(|sqlite| DatabaseRow::Sqlite(sqlite))
                     .err_into()
@@ -115,7 +119,7 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
             }
             #[cfg(feature = "mysql")]
             DatabaseTransaction::MySQL(mysql) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.fetch(mysql)
                     .map_ok(|mysql| DatabaseRow::MySQL(mysql))
                     .err_into()
@@ -125,15 +129,16 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
         row
     }
 
-    fn execute(
-        self,
-        query: &'a str,
-        values: &'a [Value],
-    ) -> BoxFuture<'a, Result<QueryResult, Error>> {
+    fn execute<'e, 'q, E>(self, execute: E) -> BoxFuture<'e, Result<QueryResult, Error>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         match self {
             #[cfg(feature = "postgres")]
             DatabaseTransaction::Pg(pg) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(pg)
                     .err_into()
                     .map_ok(|ret| QueryResult {
@@ -144,7 +149,7 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
             }
             #[cfg(feature = "sqlite")]
             DatabaseTransaction::Sqlite(sqlite) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(sqlite)
                     .map_ok(|ret| QueryResult {
                         rows_affected: ret.rows_affected(),
@@ -155,7 +160,7 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
             }
             #[cfg(feature = "mysql")]
             DatabaseTransaction::MySQL(mysql) => {
-                let q = bind_values!(values, sqlx::query(query));
+                let q = query_and_bind!(execute);
                 q.execute(mysql)
                     .err_into()
                     .map_ok(|ret| QueryResult {
@@ -167,24 +172,32 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
         }
     }
 
-    fn execute_many(
+    fn execute_many<'e, 'q, E>(
         self,
-        query: &'a str,
-    ) -> BoxFuture<'a, BoxStream<'a, Result<QueryResult, Error>>> {
+        execute: E,
+    ) -> BoxFuture<'e, BoxStream<'e, Result<QueryResult, Error>>>
+    where
+        'q: 'e,
+        'c: 'e,
+        E: 'q + Execute<'q>,
+    {
         async move {
             match self {
                 #[cfg(feature = "postgres")]
-                DatabaseTransaction::Pg(pg) => pg
-                    .execute_many(query)
-                    .err_into()
-                    .map_ok(|ret| QueryResult {
-                        rows_affected: ret.rows_affected(),
-                        last_insert_id: None,
-                    })
-                    .boxed(),
+                DatabaseTransaction::Pg(pg) => {
+                    let q = query_and_bind!(execute);
+                    q.execute_many(pg)
+                        .await
+                        .map_ok(|ret| QueryResult {
+                            rows_affected: ret.rows_affected(),
+                            last_insert_id: None,
+                        })
+                        .err_into()
+                        .boxed()
+                }
                 #[cfg(feature = "sqlite")]
                 DatabaseTransaction::Sqlite(sqlite) => {
-                    let q = sqlx::query(query);
+                    let q = query_and_bind!(execute);
                     q.execute_many(sqlite)
                         .await
                         .map_ok(|ret| QueryResult {
@@ -195,14 +208,17 @@ impl<'c, 'a> Executor<'a> for &'a mut DatabaseTransaction<'c> {
                         .boxed()
                 }
                 #[cfg(feature = "mysql")]
-                DatabaseTransaction::MySQL(mysql) => mysql
-                    .execute_many(query)
-                    .err_into()
-                    .map_ok(|ret| QueryResult {
-                        rows_affected: ret.rows_affected(),
-                        last_insert_id: None,
-                    })
-                    .boxed(),
+                DatabaseTransaction::MySQL(mysql) => {
+                    let q = query_and_bind!(execute);
+                    q.execute_many(mysql)
+                        .await
+                        .map_ok(|ret| QueryResult {
+                            rows_affected: ret.rows_affected(),
+                            last_insert_id: None,
+                        })
+                        .err_into()
+                        .boxed()
+                }
             }
         }
         .boxed()

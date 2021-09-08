@@ -14,7 +14,7 @@ pub enum DatabaseRow {
 }
 
 pub struct Column<'a> {
-    name: &'a str,
+    pub name: &'a str,
 }
 
 pub trait Row {
@@ -56,6 +56,13 @@ impl Row for DatabaseRow {
             #[cfg(feature = "mysql")]
             DatabaseRow::MySQL(mysql) => <sqlx::mysql::MySqlRow as Row>::columns(mysql),
         }
+    }
+}
+
+impl DatabaseRow {
+    #[cfg(feature = "serialize")]
+    pub fn try_into<'de, S: serde::de::Deserialize<'de>>(self) -> Result<S, nibard_shared::Error> {
+        S::deserialize(self)
     }
 }
 

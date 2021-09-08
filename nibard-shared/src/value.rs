@@ -1,3 +1,4 @@
+use super::Error;
 #[cfg(feature = "time")]
 use chrono::{NaiveDate, NaiveDateTime};
 #[cfg(feature = "json")]
@@ -71,6 +72,63 @@ impl Value {
         match self {
             Value::Text(s) => Some(s.as_str()),
             _ => None,
+        }
+    }
+
+    pub fn into_i16(self) -> Result<i16, Error> {
+        match self {
+            Value::Int(i) => Ok(i as i16),
+            Value::SmallInt(i) => Ok(i),
+            Value::BigInt(i) => Ok(i as i16),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_i32(self) -> Result<i32, Error> {
+        match self {
+            Value::Int(i) => Ok(i),
+            Value::SmallInt(i) => Ok(i as i32),
+            Value::BigInt(i) => Ok(i as i32),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_i64(self) -> Result<i64, Error> {
+        match self {
+            Value::Int(i) => Ok(i as i64),
+            Value::SmallInt(i) => Ok(i as i64),
+            Value::BigInt(i) => Ok(i),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_f32(self) -> Result<f32, Error> {
+        match self {
+            Value::Float(i) => Ok(i as f32),
+            Value::Real(i) => Ok(i),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_f64(self) -> Result<f64, Error> {
+        match self {
+            Value::Float(i) => Ok(i),
+            Value::Real(i) => Ok(i as f64),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_bool(self) -> Result<bool, Error> {
+        match self {
+            Value::Bool(i) => Ok(i),
+            _ => unimplemented!(""),
+        }
+    }
+
+    pub fn into_str(self) -> Result<String, Error> {
+        match self {
+            Value::Text(i) => Ok(i),
+            _ => unimplemented!(""),
         }
     }
 }

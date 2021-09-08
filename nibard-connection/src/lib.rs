@@ -12,6 +12,9 @@ compile_error!("need at least one");
 ))]
 compile_error!("need at least one");
 
+#[cfg(feature = "serialize")]
+pub mod de;
+
 #[macro_use]
 mod macros;
 

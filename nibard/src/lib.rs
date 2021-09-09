@@ -10,5 +10,7 @@ pub mod prelude {
     pub use super::executor_ext::*;
     pub use super::query::StatementQuery;
     pub use nibard_connection::{Executor, Row, RowExt};
-    pub use nibard_query::{Expression, ExpressionExt, Table, TableExt, Target, TargetExt};
+    pub use nibard_query::{
+        Expression, ExpressionExt, Select, SelectExt, Table, TableExt, Target, TargetExt,
+    };
 }

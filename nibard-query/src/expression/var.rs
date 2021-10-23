@@ -6,6 +6,14 @@ pub struct VarExpr {
     value: Value,
 }
 
+impl VarExpr {
+    pub fn new(value: impl Into<Value>) -> VarExpr {
+        VarExpr {
+            value: value.into(),
+        }
+    }
+}
+
 impl Expression for VarExpr {
     fn build(&self, ctx: &mut Context) -> Result<(), Error> {
         ctx.push(self.value.clone())?;

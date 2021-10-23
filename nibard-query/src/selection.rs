@@ -64,3 +64,19 @@ selection!(
     1 => C1,
     0 => C0
 );
+
+impl<V> Selection for Vec<V>
+where
+    V: Column,
+{
+    #[inline]
+    fn build(&self, ctx: &mut Context) -> Result<(), crate::Error> {
+        for (idx, col) in self.iter().enumerate() {
+            if idx != 0 {
+                ctx.write_char(',')?;
+            }
+            col.build(ctx)?;
+        }
+        Ok(())
+    }
+}

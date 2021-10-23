@@ -13,8 +13,8 @@ mod target;
 mod types;
 
 pub use self::{
-    b, column::*, column_ext::*, context::*, error::*, expression::*, filter::*, join::*,
-    select::*, selection::*, statement::*, table::*, target::*, types::*,
+    column::*, column_ext::*, context::*, error::*, expression::*, filter::*, join::*, select::*,
+    selection::*, statement::*, table::*, target::*, types::*,
 };
 
 #[cfg(test)]

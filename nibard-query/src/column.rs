@@ -31,3 +31,7 @@ impl Column for String {
         self
     }
 }
+
+pub fn col<C: Column>(col: C) -> impl Column {
+    col
+}

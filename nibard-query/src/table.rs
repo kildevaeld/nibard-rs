@@ -116,3 +116,7 @@ where
         Ok(())
     }
 }
+
+pub fn table<T: Table>(table: T) -> impl Table {
+    table
+}

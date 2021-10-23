@@ -32,7 +32,7 @@ mod test {
         //     .filter("test".eql("test"));
 
         // }
-        let table = "todos"; //.alias("todo");
+        let table = table("todos").alias("todo");
         let other = "users"; //.alias("author");
 
         let select = (&table)
@@ -42,7 +42,12 @@ mod test {
                 (&table).col("description"),
             ))
             .join(Join::left(&other).on((&other).col("id").eql(2)))
-            .filter((&table).col("id").eql(1).and_group("label".like("%stuff%")));
+            .filter(
+                (&table)
+                    .col("id")
+                    .eql(1)
+                    .and_group("label".like("%stuff%").and("test".eql("rapper"))),
+            );
         let out = build(Dialect::Sqlite, select).unwrap();
         println!("TEST {:?}", out);
     }

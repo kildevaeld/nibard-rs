@@ -3,7 +3,7 @@ mod query;
 
 pub use nibard_connection as connection;
 pub use nibard_connection::*;
-pub use nibard_query::*;
+pub use nibard_query::{self, *};
 pub use nibard_shared::*;
 
 pub mod prelude {

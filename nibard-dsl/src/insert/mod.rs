@@ -1,5 +1,5 @@
 use crate::{query::Selection, Context, Error, Statement};
-use nibard_shared::ValueRef;
+use nibard_shared::{Value, ValueRef};
 use std::borrow::Cow;
 use std::fmt::Write;
 
@@ -7,7 +7,7 @@ use std::fmt::Write;
 pub struct Insert<'a> {
     pub(crate) table: Cow<'a, str>,
     pub(crate) keys: Vec<Cow<'a, str>>,
-    pub(crate) values: Vec<ValueRef<'a>>,
+    pub(crate) values: Vec<Value>,
 }
 
 impl<'a> Insert<'a> {
@@ -18,11 +18,17 @@ impl<'a> Insert<'a> {
             keys: Vec::default(),
         }
     }
-    pub fn set<'b: 'a, V: Into<ValueRef<'a>>>(
-        mut self,
-        field: impl Into<Cow<'a, str>>,
-        value: V,
-    ) -> Self {
+    // pub fn set<'b: 'a, V: Into<ValueRef<'a>>>(
+    //     mut self,
+    //     field: impl Into<Cow<'a, str>>,
+    //     value: V,
+    // ) -> Self {
+    //     self.keys.push(field.into());
+    //     self.values.push(value.into());
+    //     self
+    // }
+
+    pub fn set<V: Into<Value>>(mut self, field: impl Into<Cow<'a, str>>, value: V) -> Self {
         self.keys.push(field.into());
         self.values.push(value.into());
         self

@@ -1,6 +1,6 @@
 use async_stream::stream;
 use futures::Stream;
-use nibard_connection::{DatabaseRow, Error, Execute, Executor};
+use nibard_connection::{DatabaseRow, Error, Execute, Executor, QueryResult};
 use nibard_dsl::{build, Statement};
 use nibard_shared::{Dialect, Value};
 
@@ -32,6 +32,13 @@ impl Query {
         Self: 'e,
     {
         e.fetch_one(&self).await
+    }
+
+    pub async fn execute<'e, E: Executor<'e>>(self, e: E) -> Result<QueryResult, Error>
+    where
+        Self: 'e,
+    {
+        e.execute(&self).await
     }
 }
 

@@ -2,7 +2,7 @@
 
 
 members = [
-    "nibard-query",
+    "nibard-dsl",
     "nibard-shared",
     "nibard-connection",
     "nibard-lua",

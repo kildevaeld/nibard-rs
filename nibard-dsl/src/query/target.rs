@@ -1,4 +1,5 @@
-use super::{Context, Error, Sel, Select, Selection, Table};
+use super::{Sel, Select, Selection, Table};
+use crate::{Context, Error};
 use std::fmt::Write;
 
 pub trait Target {

@@ -1,6 +1,8 @@
-use super::{Error, Statement};
+use super::Statement;
 use nibard_shared::{Dialect, Value};
 use std::fmt::{self, Write as _};
+
+use crate::Error;
 
 pub struct Context<'a> {
     data: &'a mut dyn fmt::Write,

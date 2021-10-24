@@ -1,5 +1,7 @@
-use super::{Context, Error, Expression, Joinable, SelectFilter, Selection, Statement, Target};
+use super::{Expression, Joinable, SelectFilter, Selection, Target};
+use crate::{Context, Error, Statement};
 use std::fmt::Write;
+
 pub trait Select {
     type Target: Target;
     type Selection: Selection;

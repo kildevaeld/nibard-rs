@@ -1,5 +1,7 @@
-use super::{BinaryExpression, BinaryOperator, Context, Error, Expression, Select, Statement};
+use super::{BinaryExpression, BinaryOperator, Expression, Select};
 use std::fmt::Write;
+
+use crate::{Context, Error, Statement};
 
 #[derive(Clone, Debug, Copy, PartialEq)]
 pub struct SelectFilter<S, E>(pub S, pub E);

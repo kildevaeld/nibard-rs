@@ -1,7 +1,7 @@
 use async_stream::stream;
 use futures::Stream;
 use nibard_connection::{DatabaseRow, Error, Execute, Executor};
-use nibard_query::{build, Statement};
+use nibard_dsl::{build, Statement};
 use nibard_shared::{Dialect, Value};
 
 #[derive(Clone, Debug, PartialEq)]

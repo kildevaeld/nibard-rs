@@ -1,4 +1,4 @@
-use super::{Context, Error};
+use crate::{Context, Error};
 use std::fmt::Write;
 
 pub trait Column {

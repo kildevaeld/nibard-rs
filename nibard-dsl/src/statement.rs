@@ -1,4 +1,4 @@
-use super::{Context, Error};
+use crate::{Context, Error};
 
 pub trait Statement {
     fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error>;

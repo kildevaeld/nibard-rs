@@ -1038,7 +1038,7 @@ dependencies = [
  "async-stream",
  "futures",
  "nibard-connection",
- "nibard-query",
+ "nibard-dsl",
  "nibard-shared",
 ]
 
@@ -1048,10 +1048,17 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "futures",
- "nibard-query",
  "nibard-shared",
  "serde",
  "sqlx",
+ "thiserror",
+]
+
+[[package]]
+name = "nibard-dsl"
+version = "0.1.0"
+dependencies = [
+ "nibard-shared",
  "thiserror",
 ]
 
@@ -1064,14 +1071,6 @@ dependencies = [
  "mlua",
  "nibard",
  "tokio",
-]
-
-[[package]]
-name = "nibard-query"
-version = "0.1.0"
-dependencies = [
- "nibard-shared",
- "thiserror",
 ]
 
 [[package]]

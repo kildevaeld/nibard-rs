@@ -1,4 +1,5 @@
-use super::{BinaryExpression, BinaryOperator, Column, Context, Error, Expression, IntoExpression};
+use super::{BinaryExpression, BinaryOperator, Column, Expression, IntoExpression};
+use crate::{Context, Error};
 use std::borrow::Cow;
 use std::fmt::Write;
 

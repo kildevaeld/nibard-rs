@@ -1,20 +1,17 @@
 mod column;
 mod column_ext;
-mod context;
-mod error;
 mod expression;
 mod filter;
 mod join;
 mod select;
 mod selection;
-mod statement;
 mod table;
 mod target;
 mod types;
 
 pub use self::{
-    column::*, column_ext::*, column_ext::*, context::*, error::*, expression::*, filter::*,
-    join::*, select::*, selection::*, statement::*, table::*, target::*, types::*,
+    column::*, column_ext::*, column_ext::*, expression::*, filter::*, join::*, select::*,
+    selection::*, table::*, target::*, types::*,
 };
 
 #[cfg(test)]
@@ -48,7 +45,7 @@ mod test {
                     .eql(1)
                     .and_group("label".like("%stuff%").and("test".eql("rapper"))),
             );
-        let out = build(Dialect::Sqlite, select).unwrap();
+        let out = crate::context::build(Dialect::Sqlite, select).unwrap();
         println!("TEST {:?}", out);
     }
 }

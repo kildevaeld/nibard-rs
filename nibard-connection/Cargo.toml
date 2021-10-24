@@ -7,7 +7,6 @@ edition = "2018"
 
 [dependencies]
 nibard-shared = { path = "../nibard-shared" }
-nibard-query = { path = "../nibard-query" }
 sqlx = { version = "0.5" }
 futures = { version = "0.3", default-features = false }
 thiserror = "1"

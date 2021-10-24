@@ -5,6 +5,8 @@ use nibard::Database;
 use nibard::Dialect;
 use serde::{Deserialize, Serialize};
 
+use nibard::dsl::prelude::*;
+
 #[derive(Debug, Deserialize)]
 struct Todo {
     id: i64,

@@ -1,4 +1,5 @@
-use super::{Column, Context, Error, Target};
+use super::{Column, Target};
+use crate::{Context, Error};
 use std::fmt::Write;
 
 pub trait Selection {

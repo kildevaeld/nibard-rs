@@ -1,5 +1,5 @@
 [package]
-name = "nibard-query"
+name = "nibard-dsl"
 version = "0.1.0"
 edition = "2018"
 

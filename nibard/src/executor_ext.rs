@@ -4,7 +4,7 @@ use futures::{
     stream::{BoxStream, StreamExt},
 };
 use nibard_connection::{DatabaseRow, Error, Executor};
-use nibard_query::Statement;
+use nibard_dsl::Statement;
 
 pub trait ExecutorExt<'c>: Executor<'c> + Send {
     fn query<S: Statement>(self, stmt: S) -> BoxStream<'c, Result<DatabaseRow, Error>>

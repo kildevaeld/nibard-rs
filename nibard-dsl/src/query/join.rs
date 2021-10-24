@@ -1,4 +1,5 @@
-use crate::{Context, Error, Expression, Table};
+use super::{Expression, Table};
+use crate::{Context, Error};
 use std::fmt::Write;
 
 pub trait Joinable {

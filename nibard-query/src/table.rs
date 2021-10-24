@@ -59,6 +59,15 @@ pub struct TableAlias<'a, T> {
 }
 
 impl<'a, T> TableAlias<'a, T> {
+    pub fn new(table: T, alias: impl Into<Cow<'a, str>>) -> TableAlias<'a, T> {
+        TableAlias {
+            table,
+            alias: alias.into(),
+        }
+    }
+}
+
+impl<'a, T> TableAlias<'a, T> {
     pub fn table(&self) -> &T {
         &self.table
     }

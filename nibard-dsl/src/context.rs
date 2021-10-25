@@ -11,6 +11,10 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+    pub fn dialect(&self) -> Dialect {
+        self.dialect
+    }
+
     pub fn new(dialect: Dialect, writer: &'a mut dyn fmt::Write) -> Context<'a> {
         Context {
             dialect,

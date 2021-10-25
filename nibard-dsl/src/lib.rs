@@ -1,10 +1,14 @@
 mod context;
 mod error;
-pub mod insert;
-pub mod query;
 mod statement;
 
-pub use self::{context::*, error::Error, insert::insert, statement::Statement};
+pub mod create;
+pub mod delete;
+pub mod insert;
+pub mod query;
+pub mod update;
+
+pub use self::{context::*, error::Error, insert::insert, statement::Statement, update::update};
 
 pub mod prelude {
     pub use super::query::{

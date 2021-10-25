@@ -150,7 +150,6 @@ impl<'c> Executor<'c> for &'c DatabaseKind {
                     if let Some(values) = execute.args() {
                         q = bind_values!(values, q);
                     }
-                    // let q = bind_values!(values, sqlx::query(query));
                     q.fetch_one(pg).await.map(DatabaseRow::Pg)?
                 }
                 #[cfg(feature = "mysql")]
@@ -159,12 +158,10 @@ impl<'c> Executor<'c> for &'c DatabaseKind {
                     if let Some(values) = execute.args() {
                         q = bind_values!(values, q);
                     }
-                    // let q = bind_values!(values, sqlx::query(query));
                     q.fetch_one(pg).await.map(DatabaseRow::MySQL)?
                 }
                 #[cfg(feature = "sqlite")]
                 DatabaseKind::Sqlite(sqlite) => {
-                    // let q = bind_values!(values, sqlx::query(query));
                     let mut q = sqlx::query(execute.sql());
                     if let Some(values) = execute.args() {
                         q = bind_values!(values, q);

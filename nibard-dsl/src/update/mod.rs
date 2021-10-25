@@ -8,7 +8,7 @@ use std::fmt::Write;
 pub struct Update<'a> {
     pub(crate) table: Cow<'a, str>,
     pub(crate) values: HashMap<Cow<'a, str>, Value>,
-    pub(crate) filters: Option<Box<dyn Expression>>,
+    pub(crate) filters: Option<Box<dyn Expression + Send>>,
 }
 
 impl<'a> Update<'a> {
@@ -24,7 +24,7 @@ impl<'a> Update<'a> {
         self
     }
 
-    pub fn on<E: Expression + 'static>(mut self, e: E) -> Self {
+    pub fn on<E: Expression + 'static + Send>(mut self, e: E) -> Self {
         self.filters = Some(Box::new(e));
         self
     }

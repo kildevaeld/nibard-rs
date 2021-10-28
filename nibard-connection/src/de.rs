@@ -69,7 +69,10 @@ where
         V: de::DeserializeSeed<'de>,
     {
         let key = self.columns.pop_front().unwrap();
-        let value: Value = self.row.try_get(&key.name).expect("serialize to value");
+        let value: Value = self
+            .row
+            .try_get(&key.name, None)
+            .expect("serialize to value");
         de::DeserializeSeed::deserialize(seed, value) //.map_err(|e| e.prepend_key(key))
     }
 }

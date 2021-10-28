@@ -346,6 +346,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
+ "serde",
  "time",
  "winapi",
 ]
@@ -1052,6 +1053,7 @@ dependencies = [
  "serde",
  "sqlx",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1756,6 +1758,7 @@ dependencies = [
  "bitflags",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "crossbeam-channel",
  "crossbeam-queue",

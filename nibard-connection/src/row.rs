@@ -1,7 +1,7 @@
 use super::Error;
 #[cfg(feature = "time")]
 use chrono::NaiveDateTime;
-use nibard_shared::Value;
+use nibard_shared::{Type, Value};
 use sqlx::{Column as _, Row as SqlxRow, TypeInfo, ValueRef as SqlxValueRef};
 
 pub enum DatabaseRow {
@@ -18,7 +18,7 @@ pub struct Column<'a> {
 }
 
 pub trait Row {
-    fn try_get(&self, name: &str) -> Result<Value, Error>;
+    fn try_get(&self, name: &str, ty: Option<Type>) -> Result<Value, Error>;
     fn columns<'a>(&'a self) -> Vec<Column<'a>>;
 }
 
@@ -27,7 +27,7 @@ pub trait RowExt: Row {
         let mut out = std::collections::HashMap::default();
 
         for col in self.columns() {
-            out.insert(col.name.to_owned(), self.try_get(col.name).unwrap());
+            out.insert(col.name.to_owned(), self.try_get(col.name, None).unwrap());
         }
         out
     }
@@ -36,14 +36,16 @@ pub trait RowExt: Row {
 impl<R: Row> RowExt for R {}
 
 impl Row for DatabaseRow {
-    fn try_get(&self, name: &str) -> Result<Value, Error> {
+    fn try_get(&self, name: &str, ty: Option<Type>) -> Result<Value, Error> {
         match self {
             #[cfg(feature = "postgres")]
-            DatabaseRow::Pg(pg) => <sqlx::postgres::PgRow as Row>::try_get(pg, name),
+            DatabaseRow::Pg(pg) => <sqlx::postgres::PgRow as Row>::try_get(pg, name, ty),
             #[cfg(feature = "sqlite")]
-            DatabaseRow::Sqlite(sqlite) => <sqlx::sqlite::SqliteRow as Row>::try_get(sqlite, name),
+            DatabaseRow::Sqlite(sqlite) => {
+                <sqlx::sqlite::SqliteRow as Row>::try_get(sqlite, name, ty)
+            }
             #[cfg(feature = "mysql")]
-            DatabaseRow::MySQL(mysql) => <sqlx::mysql::MySqlRow as Row>::try_get(mysql, name),
+            DatabaseRow::MySQL(mysql) => <sqlx::mysql::MySqlRow as Row>::try_get(mysql, name, ty),
         }
     }
 
@@ -68,7 +70,7 @@ impl DatabaseRow {
 
 #[cfg(feature = "postgres")]
 impl Row for sqlx::postgres::PgRow {
-    fn try_get(&self, name: &str) -> Result<Value, Error> {
+    fn try_get(&self, name: &str, ty: Option<Type>) -> Result<Value, Error> {
         let value_ref = self.try_get_raw(name)?;
         let type_info = value_ref.type_info();
 
@@ -107,7 +109,7 @@ impl Row for sqlx::postgres::PgRow {
 
 #[cfg(feature = "sqlite")]
 impl Row for sqlx::sqlite::SqliteRow {
-    fn try_get(&self, name: &str) -> Result<Value, Error> {
+    fn try_get(&self, name: &str, ty: Option<Type>) -> Result<Value, Error> {
         let value_ref = self.try_get_raw(name)?;
         let type_info = value_ref.type_info();
 
@@ -116,6 +118,17 @@ impl Row for sqlx::sqlite::SqliteRow {
         }
 
         let v = match type_info.name() {
+            #[cfg(feature = "time")]
+            "TEXT" => {
+                if Some(Type::DateTime) == ty {
+                    let v: NaiveDateTime = <Self as SqlxRow>::try_get(self, name)?;
+                    Value::DateTime(v)
+                } else {
+                    let v: String = <Self as sqlx::Row>::try_get(self, name)?;
+                    Value::Text(v)
+                }
+            }
+            #[cfg(not(feature = "time"))]
             "TEXT" => {
                 let v: String = <Self as sqlx::Row>::try_get(self, name)?;
                 Value::Text(v)
@@ -126,11 +139,15 @@ impl Row for sqlx::sqlite::SqliteRow {
                 Value::DateTime(v)
             }
             "INTEGER" => {
-                let v: i32 = <Self as sqlx::Row>::try_get(self, name)?;
-                Value::Int(v)
+                if Some(Type::Bool) == ty {
+                    let v: bool = <Self as sqlx::Row>::try_get(self, name)?;
+                    Value::Bool(v)
+                } else {
+                    let v: i32 = <Self as sqlx::Row>::try_get(self, name)?;
+                    Value::Int(v)
+                }
             }
             "FLOAT" => {
-                //
                 let v: f64 = <Self as sqlx::Row>::try_get(self, name)?;
                 Value::Float(v)
             }

@@ -14,14 +14,23 @@ chrono = { version = "0.4", optional = true }
 serde = { version = "1", optional = true }
 
 
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+
 [features]
 default = [  ]
 serialize = ["serde", "nibard-shared/serde"]
 sqlite = [ "sqlx/sqlite" ]
 postgres = [ "sqlx/postgres" ]
 mysql = [ "sqlx/mysql" ]
-time = ["chrono", "nibard-shared/time" ]
+time = ["chrono", "nibard-shared/time", "sqlx/chrono" ]
 runtime-tokio-rustls = ["sqlx/runtime-tokio-rustls"]
 runtime-async-std-native-tls = ["sqlx/runtime-async-std-native-tls"]
 runtime-tokio-native-tls = ["sqlx/runtime-tokio-native-tls"]
 runtime-async-std-rustls = ["sqlx/runtime-async-std-rustls"]
+
+[[example]]
+name = "sqlite"
+path = "examples/sqlite.rs"
+required-features = [  "runtime-tokio-rustls", "serialize", "time" ]

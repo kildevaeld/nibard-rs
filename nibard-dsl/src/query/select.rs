@@ -69,16 +69,6 @@ impl<S> SelectExt for S where S: Select {}
 
 pub struct JoinSelect<S, J>(S, J);
 
-// impl<S, J> JoinSelect<S, J>
-// where
-//     S: Select,
-//     J: Joinable,
-// {
-//     pub fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E> {
-//         SelectFilter(self, expr)
-//     }
-// }
-
 impl<S, J> Select for JoinSelect<S, J>
 where
     S: Select,
@@ -134,12 +124,12 @@ impl<S: Select> Statement for LimitedSelect<S> {
     fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
         self.sel.build(ctx)?;
 
-        if let Some(offset) = self.offset {
-            write!(ctx, " OFFSET {}", offset)?;
-        }
-
         if let Some(limit) = self.limit {
             write!(ctx, " LIMIT {}", limit)?;
+        }
+
+        if let Some(offset) = self.offset {
+            write!(ctx, " OFFSET {}", offset)?;
         }
 
         Ok(())

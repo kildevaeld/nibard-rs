@@ -20,10 +20,6 @@ impl<T: Target, S: Selection> Sel<T, S> {
     {
         JoinSelect(self, join)
     }
-
-    pub fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E> {
-        SelectFilter(self, expr)
-    }
 }
 
 impl<T: Target, S: Selection> Select for Sel<T, S> {
@@ -60,21 +56,28 @@ pub trait SelectExt: Select {
             limit: Some(limit),
         }
     }
+
+    fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E>
+    where
+        Self: Sized,
+    {
+        SelectFilter(self, expr)
+    }
 }
 
 impl<S> SelectExt for S where S: Select {}
 
 pub struct JoinSelect<S, J>(S, J);
 
-impl<S, J> JoinSelect<S, J>
-where
-    S: Select,
-    J: Joinable,
-{
-    pub fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E> {
-        SelectFilter(self, expr)
-    }
-}
+// impl<S, J> JoinSelect<S, J>
+// where
+//     S: Select,
+//     J: Joinable,
+// {
+//     pub fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E> {
+//         SelectFilter(self, expr)
+//     }
+// }
 
 impl<S, J> Select for JoinSelect<S, J>
 where

@@ -18,7 +18,10 @@ where
 {
     type Select = Sel<Self, S>;
     fn select(self, selection: S) -> Self::Select {
-        Sel(self, selection)
+        Sel {
+            target: self,
+            selection,
+        }
     }
 }
 

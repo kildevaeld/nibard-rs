@@ -1,4 +1,4 @@
-use super::{BinaryExpression, BinaryOperator, Expression, Select};
+use super::{BinaryExpression, BinaryOperator, Expression, LimitedSelect, Select};
 use std::fmt::Write;
 
 use crate::{Context, Error, Statement};
@@ -37,6 +37,43 @@ where
                 operator: BinaryOperator::And,
             },
         )
+    }
+
+    // pub fn offset(self, offset: u64) -> LimitedSelect<Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     LimitedSelect {
+    //         sel: self,
+    //         offset: Some(offset),
+    //         limit: None,
+    //     }
+    // }
+
+    // pub fn limit(self, limit: u64) -> LimitedSelect<Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     LimitedSelect {
+    //         sel: self,
+    //         offset: None,
+    //         limit: Some(limit),
+    //     }
+    // }
+}
+
+impl<S, E> Select for SelectFilter<S, E>
+where
+    S: Select,
+    E: Expression,
+{
+    type Target = S::Target;
+    type Selection = S::Selection;
+    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
+        self.0.build(ctx)?;
+        ctx.write_str(" WHERE ")?;
+        self.1.build(ctx)?;
+        Ok(())
     }
 }
 

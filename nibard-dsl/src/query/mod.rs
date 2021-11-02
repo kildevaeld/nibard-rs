@@ -44,7 +44,8 @@ mod test {
                     .col("id")
                     .eql(1)
                     .and_group("label".like("%stuff%").and("test".eql("rapper"))),
-            );
+            )
+            .limit(100);
         let out = crate::context::build(Dialect::Sqlite, select).unwrap();
         println!("TEST {:?}", out);
     }

@@ -122,6 +122,7 @@ where
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct ColAlias<'a, C> {
     col: C,
     name: Cow<'a, str>,

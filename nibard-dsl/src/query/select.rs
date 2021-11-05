@@ -30,14 +30,7 @@ pub struct Sel<T: Target, S: Selection> {
     pub selection: S,
 }
 
-impl<T: Target, S: Selection> Sel<T, S> {
-    pub fn join<J: Joinable>(self, join: J) -> JoinSelect<Self, J>
-    where
-        Self: Sized,
-    {
-        JoinSelect(self, join)
-    }
-}
+impl<T: Target, S: Selection> Sel<T, S> {}
 
 impl<T: Target, S: Selection> Select for Sel<T, S> {
     type Target = T;
@@ -79,6 +72,13 @@ pub trait SelectExt: Select {
         Self: Sized,
     {
         SelectFilter(self, expr)
+    }
+
+    fn join<J: Joinable>(self, join: J) -> JoinSelect<Self, J>
+    where
+        Self: Sized,
+    {
+        JoinSelect(self, join)
     }
 
     fn boxed<'a>(self) -> SelectBox<'a>

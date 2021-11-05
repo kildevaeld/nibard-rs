@@ -1,4 +1,4 @@
-use super::{Expression, Table};
+use super::{Expression, Select, Table};
 use crate::{Context, Error};
 use std::fmt::Write;
 

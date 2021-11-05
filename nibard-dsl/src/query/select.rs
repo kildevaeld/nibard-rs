@@ -1,11 +1,28 @@
 use super::{Expression, Joinable, SelectFilter, Selection, Target};
 use crate::{Context, Error, Statement};
 use std::fmt::Write;
+use std::marker::PhantomData;
 
 pub trait Select {
     type Target: Target;
     type Selection: Selection;
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
+}
+
+pub type SelectBox<'a> =
+    Box<dyn Select<Target = Box<dyn Target + 'a>, Selection = Box<dyn Selection + 'a>> + 'a>;
+
+struct BoxedSelect<'a, S>(S, PhantomData<&'a dyn Fn()>);
+
+impl<'a, S> Select for BoxedSelect<'a, S>
+where
+    S: Select,
+{
+    type Target = Box<dyn Target + 'a>;
+    type Selection = Box<dyn Selection + 'a>;
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        self.0.build(ctx)
+    }
 }
 
 pub struct Sel<T: Target, S: Selection> {
@@ -62,6 +79,13 @@ pub trait SelectExt: Select {
         Self: Sized,
     {
         SelectFilter(self, expr)
+    }
+
+    fn boxed<'a>(self) -> SelectBox<'a>
+    where
+        Self: Sized + 'a,
+    {
+        Box::new(BoxedSelect(self, PhantomData))
     }
 }
 

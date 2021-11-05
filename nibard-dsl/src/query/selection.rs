@@ -6,6 +6,12 @@ pub trait Selection {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
 }
 
+impl<'a> Selection for Box<dyn Selection + 'a> {
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub trait SelectionExt: Selection {
     fn select_from<T>(self, target: T)
     where

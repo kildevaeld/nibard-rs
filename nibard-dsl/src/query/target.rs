@@ -6,6 +6,12 @@ pub trait Target {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
 }
 
+impl<'a> Target for Box<dyn Target + 'a> {
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub trait TargetExt<S: Selection>: Target + Sized {
     type Select: Select<Target = Self>;
     fn select(self, selection: S) -> Self::Select;

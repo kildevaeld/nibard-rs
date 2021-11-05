@@ -99,6 +99,12 @@ impl<S> SelectExt for S where S: Select {}
 
 pub struct JoinSelect<S, J>(S, J);
 
+impl<S, J> JoinSelect<S, J> {
+    pub fn new(sel: S, join: J) -> JoinSelect<S, J> {
+        JoinSelect(sel, join)
+    }
+}
+
 impl<S, J> Select for JoinSelect<S, J>
 where
     S: Select,

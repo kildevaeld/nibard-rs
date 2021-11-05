@@ -6,6 +6,12 @@ use crate::{Context, Error, Statement};
 #[derive(Clone, Debug, Copy, PartialEq)]
 pub struct SelectFilter<S, E>(pub S, pub E);
 
+impl<S, E> SelectFilter<S, E> {
+    pub fn new(sel: S, expr: E) -> SelectFilter<S, E> {
+        SelectFilter(sel, expr)
+    }
+}
+
 impl<S, E> SelectFilter<S, E>
 where
     E: Expression,

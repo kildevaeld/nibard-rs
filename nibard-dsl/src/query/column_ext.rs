@@ -128,6 +128,12 @@ pub struct ColAlias<'a, C> {
     name: Cow<'a, str>,
 }
 
+impl<'a, C> ColAlias<'a, C> {
+    pub fn col(&self) -> &C {
+        &self.col
+    }
+}
+
 impl<'a, C> Column for ColAlias<'a, C>
 where
     C: Column,

@@ -16,12 +16,20 @@ struct BoxedSelect<'a, S>(S, PhantomData<&'a dyn Fn()>);
 
 impl<'a, S> Select for BoxedSelect<'a, S>
 where
-    S: Select,
+    S: Select + 'a,
 {
     type Target = Box<dyn Target + 'a>;
     type Selection = Box<dyn Selection + 'a>;
     fn build(&self, ctx: &mut Context) -> Result<(), Error> {
         self.0.build(ctx)
+    }
+}
+
+impl<'a> Select for SelectBox<'a> {
+    type Target = Box<dyn Target + 'a>;
+    type Selection = Box<dyn Selection + 'a>;
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        (&**self).build(ctx)
     }
 }
 

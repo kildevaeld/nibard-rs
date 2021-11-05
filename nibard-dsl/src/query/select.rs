@@ -25,6 +25,12 @@ where
     }
 }
 
+impl<'a> Statement for SelectBox<'a> {
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub struct Sel<T: Target, S: Selection> {
     pub target: T,
     pub selection: S,

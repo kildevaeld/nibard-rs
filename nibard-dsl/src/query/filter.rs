@@ -40,7 +40,7 @@ where
             BinaryExpression {
                 left: self.1,
                 right: expr,
-                operator: BinaryOperator::And,
+                operator: BinaryOperator::Or,
             },
         )
     }

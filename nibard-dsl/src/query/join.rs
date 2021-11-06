@@ -6,7 +6,7 @@ pub trait Joinable {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
 }
 
-impl Joinable for Box<dyn Joinable> {
+impl<'a> Joinable for Box<dyn Joinable + 'a> {
     fn build(&self, ctx: &mut Context) -> Result<(), Error> {
         (&**self).build(ctx)
     }

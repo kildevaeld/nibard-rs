@@ -6,6 +6,12 @@ pub trait Joinable {
     fn build(&self, ctx: &mut Context) -> Result<(), Error>;
 }
 
+impl Joinable for Box<dyn Joinable> {
+    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub struct Join<T> {
     kind: JoinType,
     table: T,

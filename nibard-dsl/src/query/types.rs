@@ -225,6 +225,22 @@ selection!(
     0 => C0
 );
 
+impl<V, C: Context> Selection<C> for Vec<V>
+where
+    V: Selection<C>,
+{
+    #[inline]
+    fn build(&self, ctx: &mut C) -> Result<(), crate::Error> {
+        for (idx, col) in self.iter().enumerate() {
+            if idx != 0 {
+                ctx.write_char(',')?;
+            }
+            col.build(ctx)?;
+        }
+        Ok(())
+    }
+}
+
 // Column
 
 pub trait Column<C: Context>: Selection<C> {

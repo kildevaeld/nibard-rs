@@ -72,7 +72,7 @@ pub trait ColumnExt<C: Context>: Column<C> + Sized {
         BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::In)
     }
 
-    fn alias<A: Alias<C>>(self, alias: A) -> ColAlias<Self, A, C> {
+    fn column_alias<A: Alias<C>>(self, alias: A) -> ColAlias<Self, A, C> {
         ColAlias::new(self, alias)
     }
 

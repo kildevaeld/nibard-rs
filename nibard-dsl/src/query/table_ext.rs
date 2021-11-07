@@ -1,5 +1,5 @@
 use super::{
-    Column, FilterSelect, JoinSelect, LimitedSelect, Sel, Select, Selection, Table, Target,
+    Alias, Column, FilterSelect, JoinSelect, LimitedSelect, Sel, Select, Selection, Table, Target,
 };
 use crate::{Context, Error, Statement};
 use std::marker::PhantomData;
@@ -67,9 +67,55 @@ pub trait TableExt<C: Context>: Table<C> + Sized {
     fn col<Col: Column<C>>(self, col: Col) -> TableCol<Self, Col, C> {
         TableCol::new(self, col)
     }
+
+    fn table_alias<A: Alias<C>>(self, alias: A) -> TableAlias<Self, A, C> {
+        TableAlias::new(self, alias)
+    }
 }
 
 impl<T, C: Context> TableExt<C> for T where T: Table<C> {}
+
+pub struct TableAlias<T, A, C> {
+    table: T,
+    alias: A,
+    _c: PhantomData<C>,
+}
+
+impl<T, A, C> TableAlias<T, A, C> {
+    pub fn new(table: T, alias: A) -> TableAlias<T, A, C> {
+        TableAlias {
+            table,
+            alias,
+            _c: PhantomData,
+        }
+    }
+}
+
+impl<T, A, C: Context> Target<C> for TableAlias<T, A, C>
+where
+    T: Target<C>,
+    A: Alias<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        self.table.build(ctx)?;
+        write!(ctx, " AS ")?;
+        self.alias.build(ctx)?;
+        Ok(())
+    }
+}
+
+impl<T, A, C: Context> Table<C> for TableAlias<T, A, C>
+where
+    T: Table<C>,
+    A: Alias<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <T as Table<C>>::build(&self.table, ctx)?;
+        Ok(())
+    }
+}
+
+// Table column
 
 pub struct TableCol<T, C, CTX: Context> {
     column: C,

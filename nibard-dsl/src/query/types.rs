@@ -4,6 +4,15 @@ pub trait Alias<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
+impl<'a, A, C: Context> Alias<C> for &'a A
+where
+    A: Alias<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 impl<'a, C: Context> Alias<C> for &'a str {
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         Ok(ctx.write_str(self)?)
@@ -20,6 +29,15 @@ impl<C: Context> Alias<C> for String {
 
 pub trait Target<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
+}
+
+impl<'a, T, C: Context> Target<C> for &'a T
+where
+    T: Table<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <T as Target<C>>::build(&**self, ctx)
+    }
 }
 
 impl<'a, C: Context> Target<C> for &'a str {
@@ -100,6 +118,15 @@ selection!(
 
 pub trait Table<C: Context>: Target<C> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
+}
+
+impl<'a, T, C: Context> Table<C> for &'a T
+where
+    T: Table<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <T as Table<C>>::build(&**self, ctx)
+    }
 }
 
 // Selection

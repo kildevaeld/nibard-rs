@@ -6,6 +6,23 @@ pub trait Expression<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
+pub trait ExpressionExt<'a, C: Context>: Expression<C> + Sized {
+    fn boxed(self) -> Box<dyn Expression<C> + 'a>
+    where
+        Self: 'a,
+    {
+        Box::new(self)
+    }
+}
+
+impl<'a, E: Expression<C>, C: Context> ExpressionExt<'a, C> for E {}
+
+impl<'a, C: Context> Expression<C> for Box<dyn Expression<C> + 'a> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub struct BinaryExpression<L, R, C: Context> {
     pub(crate) operator: BinaryOperator,
     pub(crate) left: L,

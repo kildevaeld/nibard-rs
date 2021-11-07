@@ -83,10 +83,19 @@ pub trait ColumnExt<C: Context>: Column<C> + Sized {
 
 impl<C, CTX: Context> ColumnExt<CTX> for C where C: Column<CTX> {}
 
-#[derive(Clone, Hash, Debug)]
+#[derive(Hash, Debug)]
 pub struct ColExpr<C, CTX: Context> {
     col: C,
     _c: PhantomData<CTX>,
+}
+
+impl<C: Clone, CTX: Context> Clone for ColExpr<C, CTX> {
+    fn clone(&self) -> Self {
+        ColExpr {
+            col: self.col.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<C, CTX: Context> ColExpr<C, CTX> {
@@ -115,11 +124,21 @@ impl<C: Column<CTX>, CTX: Context> IntoValue<CTX> for ColExpr<C, CTX> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ColAlias<Col, A, C> {
     col: Col,
     alias: A,
     _c: PhantomData<C>,
+}
+
+impl<Col: Clone, A: Clone, C> Clone for ColAlias<Col, A, C> {
+    fn clone(&self) -> Self {
+        ColAlias {
+            col: self.col.clone(),
+            alias: self.alias.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<Col, A, C> ColAlias<Col, A, C> {

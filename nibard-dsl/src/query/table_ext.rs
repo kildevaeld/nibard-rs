@@ -15,9 +15,19 @@ pub trait TargetExt<C: Context>: Target<C> + Sized {
 
 impl<T, C: Context> TargetExt<C> for T where T: Target<C> {}
 
+#[derive(Debug)]
 pub struct TargetSelect<T, S, C> {
     select: Sel<T, S>,
     _c: PhantomData<C>,
+}
+
+impl<T: Clone, S: Clone, C> Clone for TargetSelect<T, S, C> {
+    fn clone(&self) -> Self {
+        TargetSelect {
+            select: self.select.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<T, S, C: Context> Select<C> for TargetSelect<T, S, C>
@@ -75,11 +85,21 @@ pub trait TableExt<C: Context>: Table<C> + Sized {
 
 impl<T, C: Context> TableExt<C> for T where T: Table<C> {}
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct TableAlias<T, A, C> {
     table: T,
     alias: A,
     _c: PhantomData<C>,
+}
+
+impl<T: Clone, A: Clone, C> TableAlias<T, A, C> {
+    fn clone(&self) -> Self {
+        TableAlias {
+            table: self.table.clone(),
+            alias: self.alias.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<T, A, C> TableAlias<T, A, C> {
@@ -118,11 +138,21 @@ where
 
 // Table column
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct TableCol<T, C, CTX: Context> {
     column: C,
     table: T,
     _c: PhantomData<CTX>,
+}
+
+impl<T: Clone, C: Clone, CTX: Context> Clone for TableCol<T, C, CTX> {
+    fn clone(&self) -> Self {
+        TableCol {
+            column: self.column.clone(),
+            table: self.table.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<T, C, CTX: Context> TableCol<T, C, CTX> {

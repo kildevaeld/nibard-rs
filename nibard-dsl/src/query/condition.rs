@@ -23,11 +23,23 @@ impl<'a, C: Context> Expression<C> for Box<dyn Expression<C> + 'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct BinaryExpression<L, R, C: Context> {
     pub(crate) operator: BinaryOperator,
     pub(crate) left: L,
     pub(crate) right: R,
     _c: PhantomData<C>,
+}
+
+impl<L: Clone, R: Clone, C: Context> Clone for BinaryExpression<L, R, C> {
+    fn clone(&self) -> BinaryExpression<L, R, C> {
+        BinaryExpression {
+            operator: self.operator,
+            left: self.left.clone(),
+            right: self.right.clone(),
+            _c: PhantomData,
+        }
+    }
 }
 
 impl<'a, L, R, C: Context> BinaryExpression<L, R, C> {
@@ -49,6 +61,7 @@ impl<'a, L, R, C: Context> BinaryExpression<L, R, C> {
     }
 }
 
+#[derive(Clone, Debug, Copy, PartialEq)]
 pub enum BinaryOperator {
     Eq,
     Lt,

@@ -21,6 +21,19 @@ pub struct TargetSelect<T, S, C> {
     _c: PhantomData<C>,
 }
 
+impl<'a, T, S, C: Context> TargetSelect<T, S, C>
+where
+    T: Target<C>,
+    S: Selection<C>,
+{
+    pub fn boxed(self) -> Box<dyn Select<C> + 'a>
+    where
+        Self: 'a,
+    {
+        Box::new(self)
+    }
+}
+
 impl<T: Clone, S: Clone, C> Clone for TargetSelect<T, S, C> {
     fn clone(&self) -> Self {
         TargetSelect {

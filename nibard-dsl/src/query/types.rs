@@ -10,6 +10,12 @@ impl<'a, C: Context> Alias<C> for &'a str {
     }
 }
 
+impl<C: Context> Alias<C> for String {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        Ok(ctx.write_str(self)?)
+    }
+}
+
 // Target
 
 pub trait Target<C: Context> {
@@ -24,6 +30,20 @@ impl<'a, C: Context> Target<C> for &'a str {
 }
 
 impl<'a, C: Context> Table<C> for &'a str {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_str(self)?;
+        Ok(())
+    }
+}
+
+impl<C: Context> Target<C> for String {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_str(self)?;
+        Ok(())
+    }
+}
+
+impl<C: Context> Table<C> for String {
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         ctx.write_str(self)?;
         Ok(())

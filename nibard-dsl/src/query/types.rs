@@ -108,6 +108,15 @@ pub trait Selection<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
+impl<'a, T, C: Context> Selection<C> for &'a T
+where
+    T: Selection<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 impl<'a, C: Context> Selection<C> for &'a str {
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         ctx.write_str(self)?;
@@ -193,4 +202,14 @@ selection!(
 
 pub trait Column<C: Context>: Selection<C> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
+}
+
+impl<'a, T, C: Context> Column<C> for &'a T
+where
+    T: Column<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <T as Column<C>>::build(&**self, ctx)
+        // (&**self).build(ctx)
+    }
 }

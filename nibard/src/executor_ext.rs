@@ -4,24 +4,33 @@ use futures::{
     stream::{BoxStream, StreamExt},
 };
 use nibard_connection::{DatabaseRow, Error, Executor, QueryResult};
-use nibard_dsl::Statement;
+use nibard_dsl::{DefaultContext, Statement};
 
 pub trait ExecutorExt<'c>: Executor<'c> + Send {
-    fn exec<S: Statement>(self, stmt: S) -> BoxFuture<'c, Result<QueryResult, Error>>
+    fn exec<S: Statement<DefaultContext>>(
+        self,
+        stmt: S,
+    ) -> BoxFuture<'c, Result<QueryResult, Error>>
     where
         Self: Sized + 'c,
     {
         stmt.to_query(self.dialect()).execute(self).boxed()
     }
 
-    fn query<S: Statement>(self, stmt: S) -> BoxStream<'c, Result<DatabaseRow, Error>>
+    fn query<S: Statement<DefaultContext>>(
+        self,
+        stmt: S,
+    ) -> BoxStream<'c, Result<DatabaseRow, Error>>
     where
         Self: Sized + 'c,
     {
         stmt.to_query(self.dialect()).fetch(self).boxed()
     }
 
-    fn query_one<S: Statement>(self, stmt: S) -> BoxFuture<'c, Result<DatabaseRow, Error>>
+    fn query_one<S: Statement<DefaultContext>>(
+        self,
+        stmt: S,
+    ) -> BoxFuture<'c, Result<DatabaseRow, Error>>
     where
         Self: Sized + 'c,
     {

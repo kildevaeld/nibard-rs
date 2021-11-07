@@ -1,8 +1,7 @@
-use crate::query::{Expression, IntoValue};
+use crate::query::{Expression, IntoExpression};
 use crate::{Context, Error, Statement};
 use std::borrow::Cow;
 use std::fmt::Write;
-use std::marker::PhantomData;
 
 pub struct Delete<'a> {
     table: Cow<'a, str>,
@@ -15,11 +14,13 @@ impl<'a> Delete<'a> {
         }
     }
 
-    pub fn filter<C: Context, E: IntoValue<C>>(self, expr: E) -> DeleteWhere<'a, E::Expression, C> {
+    pub fn filter<C: Context, E: IntoExpression<C>>(
+        self,
+        expr: E,
+    ) -> DeleteWhere<'a, E::Expression> {
         DeleteWhere {
             table: self,
             expr: expr.into_expression(),
-            _c: PhantomData,
         }
     }
 }
@@ -31,13 +32,12 @@ impl<'a, C: Context> Statement<C> for Delete<'a> {
     }
 }
 
-pub struct DeleteWhere<'a, E, C> {
+pub struct DeleteWhere<'a, E> {
     table: Delete<'a>,
     expr: E,
-    _c: PhantomData<C>,
 }
 
-impl<'a, E, C: Context> Statement<C> for DeleteWhere<'a, E, C>
+impl<'a, E, C: Context> Statement<C> for DeleteWhere<'a, E>
 where
     E: Expression<C>,
 {

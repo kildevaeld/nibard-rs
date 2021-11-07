@@ -8,11 +8,7 @@ pub struct BinaryExpression<L, R> {
     pub(crate) right: R,
 }
 
-impl<'a, L, R> BinaryExpression<L, R>
-where
-    L: Expression,
-    R: Expression,
-{
+impl<'a, L, R> BinaryExpression<L, R> {
     pub fn new(left: L, right: R, operator: BinaryOperator) -> Self {
         BinaryExpression {
             left,
@@ -36,7 +32,7 @@ pub enum BinaryOperator {
 }
 
 impl BinaryOperator {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build<C: Context>(&self, ctx: &mut C) -> Result<(), Error> {
         match self {
             Self::Eq => ctx.write_str("="),
             Self::Lt => ctx.write_str("<"),
@@ -53,12 +49,12 @@ impl BinaryOperator {
     }
 }
 
-impl<L, R> Expression for BinaryExpression<L, R>
+impl<L, R, C: Context> Expression<C> for BinaryExpression<L, R>
 where
-    L: Expression,
-    R: Expression,
+    L: Expression<C>,
+    R: Expression<C>,
 {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         self.left.build(ctx)?;
         ctx.write_str(" ")?;
         self.operator.build(ctx)?;

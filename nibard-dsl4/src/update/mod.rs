@@ -2,6 +2,7 @@ use crate::{query::Expression, Context, Error, Statement};
 use nibard_shared::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 // #[derive(Debug)]
 pub struct Update<'a, C: Context> {

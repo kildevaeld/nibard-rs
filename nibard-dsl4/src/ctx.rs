@@ -11,12 +11,6 @@ pub trait Context: fmt::Write {
 
 pub struct DefaultContext(Dialect, Vec<Value>, String);
 
-impl DefaultContext {
-    pub fn new(dialect: Dialect) -> DefaultContext {
-        DefaultContext(dialect, Vec::default(), String::new())
-    }
-}
-
 impl fmt::Write for DefaultContext {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.2.write_str(s)

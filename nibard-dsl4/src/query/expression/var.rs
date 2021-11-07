@@ -14,14 +14,14 @@ impl VarExpr {
     }
 }
 
-impl Expression for VarExpr {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+impl<C: Context> Expression<C> for VarExpr {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         ctx.push(self.value.clone())?;
         Ok(())
     }
 }
 
-impl IntoExpression for i32 {
+impl<C: Context> IntoExpression<C> for i32 {
     type Expression = VarExpr;
     fn into_expression(self) -> Self::Expression {
         VarExpr {
@@ -30,7 +30,7 @@ impl IntoExpression for i32 {
     }
 }
 
-impl<'a> IntoExpression for &'a str {
+impl<'a, C: Context> IntoExpression<C> for &'a str {
     type Expression = VarExpr;
     fn into_expression(self) -> Self::Expression {
         VarExpr {
@@ -39,14 +39,14 @@ impl<'a> IntoExpression for &'a str {
     }
 }
 
-impl IntoExpression for Value {
+impl<C: Context> IntoExpression<C> for Value {
     type Expression = VarExpr;
     fn into_expression(self) -> Self::Expression {
         VarExpr { value: self }
     }
 }
 
-impl<'a> IntoExpression for ValueRef<'a> {
+impl<'a, C: Context> IntoExpression<C> for ValueRef<'a> {
     type Expression = VarExpr;
     fn into_expression(self) -> Self::Expression {
         VarExpr { value: self.into() }

@@ -3,14 +3,14 @@ use crate::{Context, Error};
 use std::borrow::Cow;
 use std::fmt::Write;
 
-pub trait Table {
+pub trait Table<C: Context> {
     fn name(&self) -> &str;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         Ok(ctx.write_str(self.name())?)
     }
 }
 
-pub trait TableExt: Table + Sized {
+pub trait TableExt<CTX: Context>: Table<CTX> + Sized {
     fn alias<'a>(self, name: impl Into<Cow<'a, str>>) -> TableAlias<'a, Self> {
         TableAlias {
             table: self,
@@ -18,7 +18,7 @@ pub trait TableExt: Table + Sized {
         }
     }
 
-    fn col<C: Column>(self, name: C) -> TableCol<Self, C> {
+    fn col<C: Column<CTX>>(self, name: C) -> TableCol<Self, C> {
         TableCol {
             table: self,
             column: name,
@@ -26,28 +26,28 @@ pub trait TableExt: Table + Sized {
     }
 }
 
-impl<T: Table> TableExt for T where T: Table {}
+impl<T: Table<C>, C: Context> TableExt<C> for T where T: Table<C> {}
 
-impl<T> Table for &T
+impl<T, C: Context> Table<C> for &T
 where
-    T: Table,
+    T: Table<C>,
 {
     fn name(&self) -> &str {
         (&**self).name()
     }
 
-    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         (&**self).build(ctx)
     }
 }
 
-impl<'a> Table for &'a str {
+impl<'a, C: Context> Table<C> for &'a str {
     fn name(&self) -> &str {
         self
     }
 }
 
-impl Table for String {
+impl<C: Context> Table<C> for String {
     fn name(&self) -> &str {
         self.as_str()
     }
@@ -77,15 +77,15 @@ impl<'a, T> TableAlias<'a, T> {
     }
 }
 
-impl<'a, T> Table for TableAlias<'a, T>
+impl<'a, T, C: Context> Table<C> for TableAlias<'a, T>
 where
-    T: Table,
+    T: Table<C>,
 {
     fn name(&self) -> &str {
         &self.alias
     }
 
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         self.table.build(ctx)?;
         write!(ctx, " AS {}", self.alias)?;
         Ok(())
@@ -99,9 +99,9 @@ pub struct TableCol<T, C> {
 }
 
 impl<T, C> TableCol<T, C>
-where
-    T: Table,
-    C: Column,
+// where
+//     T: Table<CTX>,
+//     C: Column<CTX>,
 {
     pub fn column(&self) -> &C {
         &self.column
@@ -112,21 +112,21 @@ where
     }
 }
 
-impl<T, C> Column for TableCol<T, C>
+impl<T, C, CTX: Context> Column<CTX> for TableCol<T, C>
 where
-    T: Table,
-    C: Column,
+    T: Table<CTX>,
+    C: Column<CTX>,
 {
     fn name(&self) -> &str {
         self.column().name()
     }
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build(&self, ctx: &mut CTX) -> Result<(), Error> {
         write!(ctx, "{}.", self.table.name())?;
         self.column().build(ctx)?;
         Ok(())
     }
 }
 
-pub fn table<T: Table>(table: T) -> impl Table {
+pub fn table<C: Context, T: Table<C>>(table: T) -> impl Table<C> {
     table
 }

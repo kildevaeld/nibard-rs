@@ -1,149 +1,160 @@
-use super::{BinaryExpression, BinaryOperator, Column, Expression, IntoExpression};
+use super::{Alias, BinaryExpression, BinaryOperator, Column, Expression, Selection};
 use crate::{Context, Error};
-use std::borrow::Cow;
-use std::fmt::Write;
+use std::marker::PhantomData;
 
-pub trait ColExt: Column + Sized {
-    fn eql<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+pub trait IntoValue<C: Context> {
+    type Expression: Expression<C>;
+    fn into_expression(self) -> Self::Expression;
+}
+
+pub trait ColumnExt<C: Context>: Column<C> + Sized {
+    fn eql<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Eq,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::Eq)
     }
 
-    fn lt<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn neq<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Lt,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(
+            ColExpr::new(self),
+            e.into_expression(),
+            BinaryOperator::NotEq,
+        )
     }
 
-    fn lte<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn lt<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Lte,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::Lt)
     }
 
-    fn gt<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn lte<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Gt,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::Lte)
     }
 
-    fn gte<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn gt<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Gte,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::Gt)
     }
 
-    fn neq<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn gte<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::NotEq,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::Gte)
     }
 
-    fn like<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn like<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::Like,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(
+            ColExpr::new(self),
+            e.into_expression(),
+            BinaryOperator::Like,
+        )
     }
 
-    fn contains<'a, E: IntoExpression>(self, e: E) -> BinaryExpression<ColExp<Self>, E::Expression>
+    fn has<'a, E: IntoValue<C>>(self, e: E) -> BinaryExpression<ColExpr<Self, C>, E::Expression, C>
     where
         Self: 'a,
     {
-        BinaryExpression {
-            operator: BinaryOperator::In,
-            left: ColExp { col: self },
-            right: e.into_expression(),
-        }
+        BinaryExpression::new(ColExpr::new(self), e.into_expression(), BinaryOperator::In)
     }
 
-    fn alias<'a>(self, name: impl Into<Cow<'a, str>>) -> ColAlias<'a, Self> {
-        ColAlias {
-            col: self,
-            name: name.into(),
-        }
+    fn alias<A: Alias<C>>(self, alias: A) -> ColAlias<Self, A, C> {
+        ColAlias::new(self, alias)
+    }
+
+    fn expr(self) -> ColExpr<Self, C> {
+        ColExpr::new(self)
     }
 }
 
-impl<C> ColExt for C where C: Column {}
+impl<C, CTX: Context> ColumnExt<CTX> for C where C: Column<CTX> {}
 
 #[derive(Clone, Hash)]
-pub struct ColExp<C> {
+pub struct ColExpr<C, CTX: Context> {
     col: C,
+    _c: PhantomData<CTX>,
 }
 
-impl<C> ColExp<C> {
-    pub fn new(col: C) -> ColExp<C> {
-        ColExp { col }
+impl<C, CTX: Context> ColExpr<C, CTX> {
+    pub fn new(col: C) -> ColExpr<C, CTX> {
+        ColExpr {
+            col,
+            _c: PhantomData,
+        }
     }
 }
 
-impl<C> Expression for ColExp<C>
+impl<C, CTX: Context> Expression<CTX> for ColExpr<C, CTX>
 where
-    C: Column,
+    C: Column<CTX>,
 {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        Ok(self.col.build(ctx)?)
+    fn build(&self, ctx: &mut CTX) -> Result<(), Error> {
+        <C as Column<CTX>>::build(&self.col, ctx)?;
+        Ok(())
+    }
+}
+
+impl<C: Column<CTX>, CTX: Context> IntoValue<CTX> for ColExpr<C, CTX> {
+    type Expression = ColExpr<C, CTX>;
+    fn into_expression(self) -> Self::Expression {
+        self
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct ColAlias<'a, C> {
-    col: C,
-    name: Cow<'a, str>,
+pub struct ColAlias<Col, A, C> {
+    col: Col,
+    alias: A,
+    _c: PhantomData<C>,
 }
 
-impl<'a, C> ColAlias<'a, C> {
-    pub fn col(&self) -> &C {
+impl<Col, A, C> ColAlias<Col, A, C> {
+    pub fn new(col: Col, alias: A) -> ColAlias<Col, A, C> {
+        ColAlias {
+            col,
+            alias,
+            _c: PhantomData,
+        }
+    }
+    pub fn col(&self) -> &Col {
         &self.col
     }
 }
 
-impl<'a, C> Column for ColAlias<'a, C>
+impl<C, A, CTX: Context> Selection<CTX> for ColAlias<C, A, CTX>
 where
-    C: Column,
+    C: Column<CTX>,
+    A: Alias<CTX>,
 {
-    fn name(&self) -> &str {
-        self.name.as_ref()
+    fn build(&self, ctx: &mut CTX) -> Result<(), Error> {
+        <C as Selection<CTX>>::build(&self.col, ctx)?;
+        write!(ctx, " AS ")?;
+        self.alias.build(ctx)?;
+        Ok(())
     }
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        self.col.build(ctx)?;
-        write!(ctx, " AS {}", self.name)?;
+}
+
+impl<C, A, CTX: Context> Column<CTX> for ColAlias<C, A, CTX>
+where
+    C: Column<CTX>,
+    A: Alias<CTX>,
+{
+    fn build(&self, ctx: &mut CTX) -> Result<(), Error> {
+        self.alias.build(ctx)?;
         Ok(())
     }
 }

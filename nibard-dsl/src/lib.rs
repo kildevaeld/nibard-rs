@@ -1,18 +1,15 @@
 mod context;
-mod error;
-mod statement;
-
-pub mod create;
 pub mod delete;
+mod error;
 pub mod insert;
 pub mod query;
+mod statement;
 pub mod update;
 
-pub use self::{context::*, error::Error, insert::insert, statement::Statement, update::update};
+pub use self::{context::*, error::Error, statement::*};
 
 pub mod prelude {
     pub use super::query::{
-        ColExt, Column, Expression, ExpressionExt, Select, SelectExt, Table, TableExt, Target,
-        TargetExt,
+        ColumnExt, FilterSelect, JoinSelect, LimitedSelect, SelectExt, TableExt, TargetExt,
     };
 }

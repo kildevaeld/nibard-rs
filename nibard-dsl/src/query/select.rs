@@ -1,55 +1,75 @@
-use super::{Expression, Joinable, SelectFilter, Selection, Target};
+use super::{BinaryExpression, BinaryOperator, Expression, IntoValue, Joinable, Selection, Target};
 use crate::{Context, Error, Statement};
-use std::fmt::Write;
 use std::marker::PhantomData;
 
-pub trait Select {
-    type Target: Target;
-    type Selection: Selection;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error>;
+pub trait Select<C: Context> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
-pub type SelectBox<'a> =
-    Box<dyn Select<Target = Box<dyn Target + 'a>, Selection = Box<dyn Selection + 'a>> + 'a>;
+impl<'a, C: Context> Select<C> for Box<dyn Select<C> + 'a> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
 
-struct BoxedSelect<'a, S>(S, PhantomData<&'a dyn Fn()>);
+impl<'a, C: Context> JoinSelect<C> for Box<dyn Select<C> + 'a> {}
 
-impl<'a, S> Select for BoxedSelect<'a, S>
+impl<'a, C: Context> FilterSelect<C> for Box<dyn Select<C> + 'a> {}
+
+pub trait SelectExt<C: Context>: Select<C> + Sized {
+    fn expr(self) -> SelectExpr<Self, C> {
+        SelectExpr::new(self)
+    }
+}
+
+impl<T, C: Context> SelectExt<C> for T where T: Select<C> {}
+
+mod private {
+    pub trait Sealed {}
+}
+
+pub trait LimitedSelect<C: Context>: Select<C> + Sized {
+    fn limit(self, limit: impl Into<Option<u64>>) -> LimitedSel<Self, C> {
+        LimitedSel::new(self).limit(limit)
+    }
+
+    fn offset(self, offset: impl Into<Option<u64>>) -> LimitedSel<Self, C> {
+        LimitedSel::new(self).offset(offset)
+    }
+}
+
+pub trait FilterSelect<C: Context>: Select<C> + Sized {
+    fn filter<E: Expression<C>>(self, expr: E) -> FilterSel<Self, E> {
+        FilterSel::new(self, expr)
+    }
+}
+
+pub trait JoinSelect<C: Context>: Select<C> + Sized {
+    fn join<J: Joinable<C>>(self, join: J) -> JoinSel<Self, J, C> {
+        JoinSel::new(self, join)
+    }
+}
+
+// Sel
+
+#[derive(Clone, Debug)]
+pub struct Sel<T, S> {
+    target: T,
+    selection: S,
+}
+
+impl<T, S> Sel<T, S> {
+    pub fn new(target: T, selection: S) -> Sel<T, S> {
+        Sel { target, selection }
+    }
+}
+
+impl<T, S, C: Context> Select<C> for Sel<T, S>
 where
-    S: Select + 'a,
+    T: Target<C>,
+    S: Selection<C>,
 {
-    type Target = Box<dyn Target + 'a>;
-    type Selection = Box<dyn Selection + 'a>;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        self.0.build(ctx)
-    }
-}
-
-impl<'a> Select for SelectBox<'a> {
-    type Target = Box<dyn Target + 'a>;
-    type Selection = Box<dyn Selection + 'a>;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        (&**self).build(ctx)
-    }
-}
-
-impl<'a> Statement for SelectBox<'a> {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        (&**self).build(ctx)
-    }
-}
-
-pub struct Sel<T: Target, S: Selection> {
-    pub target: T,
-    pub selection: S,
-}
-
-impl<T: Target, S: Selection> Sel<T, S> {}
-
-impl<T: Target, S: Selection> Select for Sel<T, S> {
-    type Target = T;
-    type Selection = S;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         ctx.write_str("SELECT ")?;
         self.selection.build(ctx)?;
         ctx.write_str(" FROM ")?;
@@ -58,119 +78,78 @@ impl<T: Target, S: Selection> Select for Sel<T, S> {
     }
 }
 
-pub trait SelectExt: Select {
-    fn offset(self, offset: u64) -> LimitedSelect<Self>
-    where
-        Self: Sized,
-    {
-        LimitedSelect {
-            sel: self,
-            offset: Some(offset),
-            limit: None,
-        }
-    }
-
-    fn limit(self, limit: u64) -> LimitedSelect<Self>
-    where
-        Self: Sized,
-    {
-        LimitedSelect {
-            sel: self,
-            offset: None,
-            limit: Some(limit),
-        }
-    }
-
-    fn filter<E: Expression>(self, expr: E) -> SelectFilter<Self, E>
-    where
-        Self: Sized,
-    {
-        SelectFilter(self, expr)
-    }
-
-    fn join<J: Joinable>(self, join: J) -> JoinSelect<Self, J>
-    where
-        Self: Sized,
-    {
-        JoinSelect(self, join)
-    }
-
-    fn boxed<'a>(self) -> SelectBox<'a>
-    where
-        Self: Sized + 'a,
-    {
-        Box::new(BoxedSelect(self, PhantomData))
-    }
-}
-
-impl<S> SelectExt for S where S: Select {}
-
-pub struct JoinSelect<S, J>(S, J);
-
-impl<S, J> JoinSelect<S, J>
+impl<T, S, C: Context> Statement<C> for Sel<T, S>
 where
-    S: Select,
-    J: Joinable,
+    T: Target<C>,
+    S: Selection<C>,
 {
-    pub fn new(sel: S, join: J) -> JoinSelect<S, J> {
-        JoinSelect(sel, join)
-    }
-}
-
-impl<S, J> Select for JoinSelect<S, J>
-where
-    S: Select,
-    J: Joinable,
-{
-    type Target = S::Target;
-    type Selection = S::Selection;
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-        self.0.build(ctx)?;
-        ctx.write_str(" ")?;
-        self.1.build(ctx)?;
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <Sel<T, S> as Select<C>>::build(self, ctx)?;
         Ok(())
     }
 }
 
-impl<T: Target, S: Selection> Statement for Sel<T, S> {
-    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
-        <Sel<T, S> as Select>::build(self, ctx)
-    }
+impl<T, S, C: Context> LimitedSelect<C> for Sel<T, S>
+where
+    T: Target<C>,
+    S: Selection<C>,
+{
 }
 
-impl<S: Select, J: Joinable> Statement for JoinSelect<S, J> {
-    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
-        <JoinSelect<S, J> as Select>::build(self, ctx)
-    }
+impl<T, S, C: Context> FilterSelect<C> for Sel<T, S>
+where
+    T: Target<C>,
+    S: Selection<C>,
+{
 }
 
-pub struct LimitedSelect<S> {
-    pub sel: S,
-    pub offset: Option<u64>,
-    pub limit: Option<u64>,
+impl<T, S, C: Context> JoinSelect<C> for Sel<T, S>
+where
+    T: Target<C>,
+    S: Selection<C>,
+{
 }
 
-impl<S> LimitedSelect<S> {
-    pub fn offset(mut self, offset: impl Into<Option<u64>>) -> Self
-    where
-        Self: Sized,
-    {
-        self.offset = offset.into();
-        self
+// Selelect offset limit
+
+#[derive(Clone, Debug)]
+pub struct LimitedSel<S, C: Context>
+where
+    S: Select<C>,
+{
+    select: S,
+    limit: Option<u64>,
+    offset: Option<u64>,
+    _c: PhantomData<C>,
+}
+
+impl<S, C: Context> LimitedSel<S, C>
+where
+    S: Select<C>,
+{
+    pub fn new(select: S) -> LimitedSel<S, C> {
+        LimitedSel {
+            select,
+            limit: None,
+            offset: None,
+            _c: PhantomData,
+        }
     }
 
-    pub fn limit(mut self, limit: impl Into<Option<u64>>) -> Self
-    where
-        Self: Sized,
-    {
+    pub fn limit(mut self, limit: impl Into<Option<u64>>) -> Self {
         self.limit = limit.into();
         self
     }
+
+    pub fn offset(mut self, offset: impl Into<Option<u64>>) -> Self {
+        self.offset = offset.into();
+        self
+    }
 }
 
-impl<S: Select> Statement for LimitedSelect<S> {
-    fn build(&self, ctx: &mut Context<'_>) -> Result<(), Error> {
-        self.sel.build(ctx)?;
+impl<S: Select<C>, C: Context> Select<C> for LimitedSel<S, C> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        self.select.build(ctx)?;
 
         if let Some(limit) = self.limit {
             write!(ctx, " LIMIT {}", limit)?;
@@ -181,5 +160,190 @@ impl<S: Select> Statement for LimitedSelect<S> {
         }
 
         Ok(())
+    }
+}
+
+impl<S, C: Context> Statement<C> for LimitedSel<S, C>
+where
+    S: Select<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <LimitedSel<S, C> as Select<C>>::build(self, ctx)?;
+        Ok(())
+    }
+}
+
+// Selct join
+#[derive(Clone, Debug)]
+pub struct JoinSel<S, J, C: Context>
+where
+    S: Select<C>,
+{
+    select: S,
+    join: J,
+    _c: PhantomData<C>,
+}
+
+impl<'a, S, J, C: Context + 'a> JoinSel<S, J, C>
+where
+    S: Select<C> + 'a,
+    J: Joinable<C> + 'a,
+{
+    pub fn new(select: S, join: J) -> JoinSel<S, J, C> {
+        JoinSel {
+            select,
+            join,
+            _c: PhantomData,
+        }
+    }
+
+    pub fn boxed(self) -> Box<dyn Select<C> + 'a> {
+        Box::new(self)
+    }
+}
+
+impl<S, J, C: Context> Select<C> for JoinSel<S, J, C>
+where
+    S: Select<C>,
+    J: Joinable<C>,
+{
+    // type Target = S::Target;
+    // type Selection = S::Selection;
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        self.select.build(ctx)?;
+        ctx.write_str(" ")?;
+        self.join.build(ctx)?;
+        Ok(())
+    }
+}
+
+impl<S, J, C: Context> Statement<C> for JoinSel<S, J, C>
+where
+    S: Select<C>,
+    J: Joinable<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <JoinSel<S, J, C> as Select<C>>::build(self, ctx)?;
+        Ok(())
+    }
+}
+
+impl<S, J, C: Context> LimitedSelect<C> for JoinSel<S, J, C>
+where
+    S: Select<C>,
+    J: Joinable<C>,
+{
+}
+
+impl<S, J, C: Context> FilterSelect<C> for JoinSel<S, J, C>
+where
+    S: Select<C>,
+    J: Joinable<C>,
+{
+}
+
+#[derive(Clone, Debug)]
+pub struct FilterSel<S, E> {
+    select: S,
+    expr: E,
+}
+
+impl<S, E> FilterSel<S, E> {
+    pub fn new(select: S, expr: E) -> FilterSel<S, E> {
+        FilterSel { select, expr }
+    }
+
+    pub fn and<E1: Expression<C>, C: Context>(
+        self,
+        e: E1,
+    ) -> FilterSel<S, BinaryExpression<E, E1, C>> {
+        FilterSel {
+            select: self.select,
+            expr: BinaryExpression::new(self.expr, e, BinaryOperator::And),
+        }
+    }
+
+    pub fn or<E1: Expression<C>, C: Context>(
+        self,
+        e: E1,
+    ) -> FilterSel<S, BinaryExpression<E, E1, C>> {
+        FilterSel {
+            select: self.select,
+            expr: BinaryExpression::new(self.expr, e, BinaryOperator::Or),
+        }
+    }
+}
+
+impl<S, E, C: Context> Select<C> for FilterSel<S, E>
+where
+    S: Select<C>,
+    E: Expression<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        self.select.build(ctx)?;
+        ctx.write_str(" WHERE ")?;
+        self.expr.build(ctx)?;
+        Ok(())
+    }
+}
+
+impl<S, E, C: Context> Statement<C> for FilterSel<S, E>
+where
+    S: Select<C>,
+    E: Expression<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        <FilterSel<S, E> as Select<C>>::build(self, ctx)?;
+        Ok(())
+    }
+}
+
+impl<S, E, C: Context> LimitedSelect<C> for FilterSel<S, E>
+where
+    S: Select<C>,
+    E: Expression<C>,
+{
+}
+
+pub struct SelectExpr<S, C: Context>
+where
+    S: Select<C>,
+{
+    select: S,
+    _c: PhantomData<C>,
+}
+
+impl<S, C: Context> SelectExpr<S, C>
+where
+    S: Select<C>,
+{
+    pub fn new(select: S) -> SelectExpr<S, C> {
+        SelectExpr {
+            select,
+            _c: PhantomData,
+        }
+    }
+}
+
+impl<S, C: Context> Expression<C> for SelectExpr<S, C>
+where
+    S: Select<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_char('(')?;
+        self.select.build(ctx)?;
+        ctx.write_char(')')?;
+
+        Ok(())
+    }
+}
+
+impl<S, C: Context> IntoValue<C> for SelectExpr<S, C>
+where
+    S: Select<C>,
+{
+    type Expression = SelectExpr<S, C>;
+    fn into_expression(self) -> Self::Expression {
+        self
     }
 }

@@ -2,25 +2,25 @@ use super::{Sel, Select, Selection, Table};
 use crate::{Context, Error};
 use std::fmt::Write;
 
-pub trait Target {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error>;
+pub trait Target<C: Context> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
-impl<'a> Target for Box<dyn Target + 'a> {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+impl<'a, C: Context> Target<C> for Box<dyn Target<C> + 'a> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         (&**self).build(ctx)
     }
 }
 
-pub trait TargetExt<S: Selection>: Target + Sized {
-    type Select: Select<Target = Self>;
+pub trait TargetExt<S: Selection<C>, C: Context>: Target<C> + Sized {
+    type Select: Select<C, Target = Self>;
     fn select(self, selection: S) -> Self::Select;
 }
 
-impl<T, S> TargetExt<S> for T
+impl<T, S, C: Context> TargetExt<S, C> for T
 where
-    T: Target,
-    S: Selection,
+    T: Target<C>,
+    S: Selection<C>,
 {
     type Select = Sel<Self, S>;
     fn select(self, selection: S) -> Self::Select {
@@ -33,9 +33,9 @@ where
 
 macro_rules! selection {
     ($n: tt => $first: ident) => {
-        impl<$first: Table> Target for $first {
-            fn build(&self, ctx: &mut Context) -> Result<(), Error> {
-                <$first as Table>::build(self, ctx)?;
+        impl<C: Context, $first: Table<C>> Target<C> for ($first,) {
+            fn build(&self, ctx: &mut C) -> Result<(), Error> {
+                <$first as Table<C>>::build(&self.0, ctx)?;
                 Ok(())
             }
         }
@@ -44,8 +44,8 @@ macro_rules! selection {
     ($n1: tt => $type1:ident, $( $n: tt => $type:ident  ),*) => {
         selection!($($n => $type),*);
 
-        impl<$type1: Table, $( $type: Table ),*> Target for ($type1, $($type),*)  {
-            fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+        impl<C: Context,$type1: Table<C>, $( $type: Table<C> ),*> Target<C> for ($type1, $($type),*)  {
+            fn build(&self, ctx: &mut C) -> Result<(), Error> {
                 self.$n1.build(ctx)?;
                 $(
                     ctx.write_str(", ")?;

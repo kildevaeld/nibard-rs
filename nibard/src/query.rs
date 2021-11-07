@@ -1,7 +1,7 @@
 use async_stream::stream;
 use futures::Stream;
 use nibard_connection::{DatabaseRow, Error, Execute, Executor, QueryResult};
-use nibard_dsl::{build, Statement};
+use nibard_dsl::{build, DefaultContext, Statement};
 use nibard_shared::{Dialect, Value};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -52,14 +52,14 @@ impl<'q> Execute<'q> for &'q Query {
     }
 }
 
-pub trait StatementQuery: Statement + Sized {
+pub trait StatementQuery: Statement<DefaultContext> + Sized {
     fn to_query(self, dialect: Dialect) -> Query {
         let (sql, values) = build(dialect, self).unwrap();
         Query { sql, values }
     }
 }
 
-impl<S> StatementQuery for S where S: Statement {}
+impl<S> StatementQuery for S where S: Statement<DefaultContext> {}
 
 // pub fn query<S: Statement>(stmt: S) -> Query<'static> {
 //     let (sql, values) = build(stmt).unwrap();

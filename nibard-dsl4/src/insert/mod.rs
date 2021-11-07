@@ -18,6 +18,15 @@ impl<'a> Insert<'a> {
             keys: Vec::default(),
         }
     }
+    // pub fn set<'b: 'a, V: Into<ValueRef<'a>>>(
+    //     mut self,
+    //     field: impl Into<Cow<'a, str>>,
+    //     value: V,
+    // ) -> Self {
+    //     self.keys.push(field.into());
+    //     self.values.push(value.into());
+    //     self
+    // }
 
     pub fn set<V: Into<Value>>(mut self, field: impl Into<Cow<'a, str>>, value: V) -> Self {
         self.keys.push(field.into());
@@ -76,16 +85,16 @@ pub fn insert<'a>(table: impl Into<Cow<'a, str>>) -> Insert<'a> {
     Insert::new(table)
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//     // use crate::build::*;
-//     use nibard_shared::Dialect;
+#[cfg(test)]
+mod test {
+    use super::*;
+    // use crate::build::*;
+    use nibard_shared::Dialect;
 
-//     #[test]
-//     fn test() {
-//         let mut output = crate::build(Dialect::Sqlite, Insert::new("blogs").set("name", "Rasmus"));
+    #[test]
+    fn test() {
+        let mut output = crate::build(Dialect::Sqlite, Insert::new("blogs").set("name", "Rasmus"));
 
-//         println!("oUTPUT {:?}", output);
-//     }
-// }
+        println!("oUTPUT {:?}", output);
+    }
+}

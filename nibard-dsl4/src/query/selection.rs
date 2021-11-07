@@ -2,29 +2,29 @@ use super::{Column, Target};
 use crate::{Context, Error};
 use std::fmt::Write;
 
-pub trait Selection {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error>;
+pub trait Selection<C: Context> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
-impl<'a> Selection for Box<dyn Selection + 'a> {
-    fn build(&self, ctx: &mut Context) -> Result<(), Error> {
+impl<'a, C: Context> Selection<C> for Box<dyn Selection<C> + 'a> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
         (&**self).build(ctx)
     }
 }
 
-pub trait SelectionExt: Selection {
+pub trait SelectionExt<C: Context>: Selection<C> {
     fn select_from<T>(self, target: T)
     where
         Self: Sized,
-        T: Target;
+        T: Target<C>;
 }
 
 macro_rules! selection {
     ($n: tt => $first: ident) => {
-        impl<$first: Column> Selection for $first {
+        impl<C: Context,$first: Column<C>> Selection<C> for ($first,) {
             #[inline]
-            fn build(&self, ctx: &mut Context) -> Result<(),$crate::Error> {
-                <$first as Column>::build(self, ctx)?;
+            fn build(&self, ctx: &mut C) -> Result<(),$crate::Error> {
+                <$first as Column<C>>::build(&self.0, ctx)?;
                 Ok(())
             }
         }
@@ -33,10 +33,10 @@ macro_rules! selection {
     ($n1: tt => $type1:ident, $( $n: tt => $type:ident  ),*) => {
         selection!($($n => $type),*);
 
-        impl<$type1: Column, $( $type: Column ),*> Selection for ($type1, $($type),*) {
+        impl<C: Context,$type1: Column<C>, $( $type: Column<C> ),*> Selection<C> for ($type1, $($type),*) {
 
             #[inline]
-            fn build(&self, ctx: &mut Context) -> Result<(),$crate::Error> {
+            fn build(&self, ctx: &mut C) -> Result<(),$crate::Error> {
                 self.$n1.build(ctx)?;
                 $(
                     ctx.write_str(", ")?;
@@ -72,12 +72,12 @@ selection!(
     0 => C0
 );
 
-impl<V> Selection for Vec<V>
+impl<V, C: Context> Selection<C> for Vec<V>
 where
-    V: Column,
+    V: Column<C>,
 {
     #[inline]
-    fn build(&self, ctx: &mut Context) -> Result<(), crate::Error> {
+    fn build(&self, ctx: &mut C) -> Result<(), crate::Error> {
         for (idx, col) in self.iter().enumerate() {
             if idx != 0 {
                 ctx.write_char(',')?;

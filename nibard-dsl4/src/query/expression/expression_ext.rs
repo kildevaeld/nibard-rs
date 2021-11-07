@@ -1,6 +1,7 @@
-use super::{BinaryExpression, BinaryOperator, Expression, GroupExpression};
+use super::{BinaryExpression, BinaryOperator, Expression, GroupExpression, IntoExpression};
+use crate::Context;
 
-pub trait ExpressionExt: Expression + Sized {
+pub trait ExpressionExt<C: Context>: Expression<C> + Sized {
     fn and<E>(self, e: E) -> BinaryExpression<Self, E> {
         BinaryExpression {
             operator: BinaryOperator::And,
@@ -17,7 +18,7 @@ pub trait ExpressionExt: Expression + Sized {
         }
     }
 
-    fn and_group<E>(self, e: E) -> BinaryExpression<Self, GroupExpression<E>> {
+    fn and_group<E: IntoExpression<C>>(self, e: E) -> BinaryExpression<Self, GroupExpression<E>> {
         BinaryExpression {
             operator: BinaryOperator::And,
             left: self,
@@ -34,4 +35,4 @@ pub trait ExpressionExt: Expression + Sized {
     }
 }
 
-impl<'a, E> ExpressionExt for E where E: Expression {}
+impl<'a, E, C: Context> ExpressionExt<C> for E where E: Expression<C> {}

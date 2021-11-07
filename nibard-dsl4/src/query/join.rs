@@ -1,5 +1,6 @@
-use super::{Expression, Table};
+use super::{Expression, Select, Table};
 use crate::{Context, Error};
+use std::fmt::Write;
 
 pub trait Joinable<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
@@ -23,7 +24,8 @@ where
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         self.kind.build(ctx)?;
         ctx.write_str(" ")?;
-        <T as Table<C>>::build(&self.table, ctx)?;
+        self.table.build(ctx)?;
+        // self.table.build(ctx)?;
         Ok(())
     }
 }

@@ -18,12 +18,12 @@ mod test {
     fn test() {
         let mut out = DefaultContext::new(Dialect::Sqlite);
         "proifles"
-            .select(("id", "name".alias("profile_name")))
+            .select(("id", "name".column_alias("profile_name")))
             .join(Join::left("test").on("test".col("id").eql("profile.id".expr())))
             .boxed()
             .filter(
                 "name"
-                    .alias("profile_name")
+                    .column_alias("profile_name")
                     .eql(20)
                     .and("test".has("test".select("id").filter("test".eql(200)).expr())),
             )

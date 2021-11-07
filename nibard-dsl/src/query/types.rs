@@ -102,6 +102,20 @@ impl<'a, C: Context> Column<C> for &'a str {
     }
 }
 
+impl<C: Context> Selection<C> for String {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_str(self)?;
+        Ok(())
+    }
+}
+
+impl<C: Context> Column<C> for String {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_str(self)?;
+        Ok(())
+    }
+}
+
 macro_rules! selection {
     ($n: tt => $first: ident) => {
         impl<C: Context,$first: Selection<C>> Selection<C> for ($first,) {

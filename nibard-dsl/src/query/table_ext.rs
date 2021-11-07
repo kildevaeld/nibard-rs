@@ -92,7 +92,7 @@ pub struct TableAlias<T, A, C> {
     _c: PhantomData<C>,
 }
 
-impl<T: Clone, A: Clone, C> TableAlias<T, A, C> {
+impl<T: Clone, A: Clone, C> Clone for TableAlias<T, A, C> {
     fn clone(&self) -> Self {
         TableAlias {
             table: self.table.clone(),

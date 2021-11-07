@@ -75,6 +75,7 @@ pub trait TableExt<C: Context>: Table<C> + Sized {
 
 impl<T, C: Context> TableExt<C> for T where T: Table<C> {}
 
+#[derive(Clone, Debug)]
 pub struct TableAlias<T, A, C> {
     table: T,
     alias: A,
@@ -117,6 +118,7 @@ where
 
 // Table column
 
+#[derive(Clone, Debug)]
 pub struct TableCol<T, C, CTX: Context> {
     column: C,
     table: T,

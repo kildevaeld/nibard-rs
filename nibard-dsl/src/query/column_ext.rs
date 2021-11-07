@@ -83,7 +83,7 @@ pub trait ColumnExt<C: Context>: Column<C> + Sized {
 
 impl<C, CTX: Context> ColumnExt<CTX> for C where C: Column<CTX> {}
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, Debug)]
 pub struct ColExpr<C, CTX: Context> {
     col: C,
     _c: PhantomData<CTX>,

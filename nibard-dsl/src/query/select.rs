@@ -12,6 +12,12 @@ impl<'a, C: Context> Select<C> for Box<dyn Select<C> + 'a> {
     }
 }
 
+impl<'a, C: Context> Statement<C> for Box<dyn Select<C> + 'a> {
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 impl<'a, C: Context> JoinSelect<C> for Box<dyn Select<C> + 'a> {}
 
 impl<'a, C: Context> FilterSelect<C> for Box<dyn Select<C> + 'a> {}

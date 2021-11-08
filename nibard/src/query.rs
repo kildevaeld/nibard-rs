@@ -11,6 +11,12 @@ pub struct Query {
 }
 
 impl Query {
+    pub fn new(sql: String, values: Vec<Value>) -> Query {
+        Query { sql, values }
+    }
+}
+
+impl Query {
     pub fn fetch<'e, 'c: 'e, E: Executor<'c>>(
         self,
         e: E,

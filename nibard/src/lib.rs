@@ -1,5 +1,5 @@
 mod executor_ext;
-mod query;
+pub mod query;
 
 pub use nibard_connection as connection;
 pub use nibard_connection::*;

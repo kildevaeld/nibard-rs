@@ -178,8 +178,15 @@ impl<T, C, CTX: Context> TableCol<T, C, CTX> {
     }
 }
 
-impl<T, C, CTX: Context> Selection<CTX> for TableCol<T, C, CTX> {
+impl<T, C, CTX: Context> Selection<CTX> for TableCol<T, C, CTX>
+where
+    T: Table<CTX>,
+    C: Column<CTX>,
+{
     fn build(&self, ctx: &mut CTX) -> Result<(), Error> {
+        <T as Table<CTX>>::build(&self.table, ctx)?;
+        ctx.write_char('.')?;
+        <C as Column<CTX>>::build(&self.column, ctx)?;
         Ok(())
     }
 }

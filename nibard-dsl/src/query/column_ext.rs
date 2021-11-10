@@ -152,6 +152,10 @@ impl<Col, A, C> ColAlias<Col, A, C> {
     pub fn col(&self) -> &Col {
         &self.col
     }
+
+    pub fn alias(&self) -> &A {
+        &self.alias
+    }
 }
 
 impl<C, A, CTX: Context> Selection<CTX> for ColAlias<C, A, CTX>

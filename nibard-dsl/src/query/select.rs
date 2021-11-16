@@ -1,5 +1,6 @@
 use super::{
-    BinaryExpression, BinaryOperator, Either, Expression, IntoValue, Joinable, Selection, Target,
+    BinaryExpression, BinaryOperator, Column, Either, Expression, IntoValue, Joinable, Selection,
+    Target,
 };
 use crate::{Context, Error, Statement};
 use std::marker::PhantomData;
@@ -11,6 +12,10 @@ pub trait Select<C: Context> {
 pub trait SelectExt<C: Context>: Select<C> + Sized {
     fn expr(self) -> SelectExpr<Self, C> {
         SelectExpr::new(self)
+    }
+
+    fn to_column(self) -> SelectSelection<Self, C> {
+        SelectSelection::new(self)
     }
 }
 
@@ -403,5 +408,48 @@ where
     type Expression = SelectExpr<S, C>;
     fn into_expression(self) -> Self::Expression {
         self
+    }
+}
+
+pub struct SelectSelection<S, C> {
+    select: S,
+    _c: PhantomData<C>,
+}
+
+impl<S, C: Context> SelectSelection<S, C>
+where
+    S: Select<C>,
+{
+    pub fn new(select: S) -> SelectSelection<S, C> {
+        SelectSelection {
+            select,
+            _c: PhantomData,
+        }
+    }
+}
+
+impl<S, C> Selection<C> for SelectSelection<S, C>
+where
+    S: Select<C>,
+    C: Context,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_char('(')?;
+        self.select.build(ctx)?;
+        ctx.write_char(')')?;
+        Ok(())
+    }
+}
+
+impl<S, C> Column<C> for SelectSelection<S, C>
+where
+    S: Select<C>,
+    C: Context,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        ctx.write_char('(')?;
+        self.select.build(ctx)?;
+        ctx.write_char(')')?;
+        Ok(())
     }
 }

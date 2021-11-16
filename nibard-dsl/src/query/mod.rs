@@ -1,12 +1,13 @@
 mod column_ext;
 mod condition;
+mod func;
 mod impls;
 mod join;
 mod select;
 mod table_ext;
 mod types;
 
-pub use self::{column_ext::*, condition::*, join::*, select::*, table_ext::*, types::*};
+pub use self::{column_ext::*, condition::*, func::*, join::*, select::*, table_ext::*, types::*};
 
 #[cfg(test)]
 mod test {
@@ -18,7 +19,7 @@ mod test {
     fn test() {
         let mut out = DefaultContext::new(Dialect::Sqlite);
         "proifles"
-            .select(("id", "name".column_alias("profile_name")))
+            .select(("id", "name".column_alias("profile_name"), Func::count_all()))
             .join(Join::left("test").on("test".col("id").eql("profile.id".expr())))
             .boxed()
             .filter(

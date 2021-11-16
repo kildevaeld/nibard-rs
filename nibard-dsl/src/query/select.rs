@@ -1,10 +1,20 @@
-use super::{BinaryExpression, BinaryOperator, Expression, IntoValue, Joinable, Selection, Target};
+use super::{
+    BinaryExpression, BinaryOperator, Either, Expression, IntoValue, Joinable, Selection, Target,
+};
 use crate::{Context, Error, Statement};
 use std::marker::PhantomData;
 
 pub trait Select<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
+
+pub trait SelectExt<C: Context>: Select<C> + Sized {
+    fn expr(self) -> SelectExpr<Self, C> {
+        SelectExpr::new(self)
+    }
+}
+
+impl<T, C: Context> SelectExt<C> for T where T: Select<C> {}
 
 impl<'a, C: Context> Select<C> for Box<dyn Select<C> + 'a> {
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
@@ -22,13 +32,51 @@ impl<'a, C: Context> JoinSelect<C> for Box<dyn Select<C> + 'a> {}
 
 impl<'a, C: Context> FilterSelect<C> for Box<dyn Select<C> + 'a> {}
 
-pub trait SelectExt<C: Context>: Select<C> + Sized {
-    fn expr(self) -> SelectExpr<Self, C> {
-        SelectExpr::new(self)
+impl<A, B, C: Context> Select<C> for Either<A, B>
+where
+    A: Select<C>,
+    B: Select<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        match self {
+            Either::Left(a) => a.build(ctx),
+            Either::Right(b) => b.build(ctx),
+        }
     }
 }
+impl<A, B, C: Context> JoinSelect<C> for Either<A, B>
+where
+    A: JoinSelect<C>,
+    B: JoinSelect<C>,
+{
+}
 
-impl<T, C: Context> SelectExt<C> for T where T: Select<C> {}
+impl<A, B, C: Context> FilterSelect<C> for Either<A, B>
+where
+    A: FilterSelect<C>,
+    B: FilterSelect<C>,
+{
+}
+
+impl<A, B, C: Context> LimitedSelect<C> for Either<A, B>
+where
+    A: LimitedSelect<C>,
+    B: LimitedSelect<C>,
+{
+}
+
+impl<A, B, C: Context> Statement<C> for Either<A, B>
+where
+    A: Statement<C>,
+    B: Statement<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        match self {
+            Either::Left(a) => a.build(ctx),
+            Either::Right(b) => b.build(ctx),
+        }
+    }
+}
 
 mod private {
     pub trait Sealed {}
@@ -55,6 +103,10 @@ pub trait JoinSelect<C: Context>: Select<C> + Sized {
         JoinSel::new(self, join)
     }
 }
+
+// pub trait OrderSelect<C: Context>: Select<C> + Sized {
+//     fn order_by_ascendin<(self)
+// }
 
 // Sel
 

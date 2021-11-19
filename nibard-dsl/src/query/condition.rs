@@ -6,6 +6,15 @@ pub trait Expression<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
 }
 
+impl<'a, T, C: Context> Expression<C> for &'a T
+where
+    T: Expression<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        (&**self).build(ctx)
+    }
+}
+
 pub trait ExpressionExt<'a, C: Context>: Expression<C> + Sized {
     fn boxed(self) -> Box<dyn Expression<C> + 'a>
     where

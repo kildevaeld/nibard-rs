@@ -123,6 +123,10 @@ impl<T, A, C> TableAlias<T, A, C> {
             _c: PhantomData,
         }
     }
+
+    pub fn name(&self) -> &T {
+        &self.table
+    }
 }
 
 impl<T, A, C: Context> Target<C> for TableAlias<T, A, C>

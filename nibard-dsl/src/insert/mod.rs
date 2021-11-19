@@ -2,6 +2,7 @@ use crate::{query::Selection, Context, Error, Statement};
 use nibard_shared::{Value, ValueRef};
 use std::borrow::Cow;
 use std::fmt::Write;
+use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub struct Insert<'a> {
@@ -25,13 +26,14 @@ impl<'a> Insert<'a> {
         self
     }
 
-    pub fn returning<C: Context, S>(self, selection: S) -> InsertReturning<'a, S>
+    pub fn returning<C: Context, S>(self, selection: S) -> InsertReturning<'a, S, C>
     where
         S: Selection<C>,
     {
         InsertReturning {
             insert: self,
             returning: selection,
+            _c: PhantomData,
         }
     }
 }
@@ -55,12 +57,13 @@ impl<'a, C: Context> Statement<C> for Insert<'a> {
     }
 }
 
-pub struct InsertReturning<'a, S> {
+pub struct InsertReturning<'a, S, C> {
     insert: Insert<'a>,
     returning: S,
+    _c: PhantomData<C>,
 }
 
-impl<'a, S, C: Context> Statement<C> for InsertReturning<'a, S>
+impl<'a, S, C: Context> Statement<C> for InsertReturning<'a, S, C>
 where
     S: Selection<C>,
 {

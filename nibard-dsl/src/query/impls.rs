@@ -25,6 +25,7 @@ impl_into_value!(i16);
 impl_into_value!(i32);
 impl_into_value!(i64);
 impl_into_value!(String);
+impl_into_value!(Value);
 
 impl<'a, C: Context> IntoValue<C> for &'a str {
     type Expression = Value;

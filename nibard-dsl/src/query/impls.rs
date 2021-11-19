@@ -33,3 +33,10 @@ impl<'a, C: Context> IntoValue<C> for &'a str {
         self.into()
     }
 }
+
+impl<'a, C: Context> IntoValue<C> for &'a Value {
+    type Expression = Value;
+    fn into_expression(self) -> Self::Expression {
+        self.clone().into()
+    }
+}

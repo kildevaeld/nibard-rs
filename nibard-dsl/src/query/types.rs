@@ -314,3 +314,16 @@ pub enum Either<A, B> {
     Left(A),
     Right(B),
 }
+
+impl<A, B, C: Context> Selection<C> for Either<A, B>
+where
+    A: Selection<C>,
+    B: Selection<C>,
+{
+    fn build(&self, ctx: &mut C) -> Result<(), Error> {
+        match self {
+            Either::Left(a) => a.build(ctx),
+            Either::Right(b) => b.build(ctx),
+        }
+    }
+}

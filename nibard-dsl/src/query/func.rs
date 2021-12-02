@@ -5,6 +5,7 @@ use crate::{Context, Error};
 pub enum FuncKind<C> {
     CountAll,
     Count(C),
+    CountDistinct(C),
 }
 
 #[derive(Clone, Debug)]
@@ -24,6 +25,12 @@ impl Func<()> {
             kind: FuncKind::Count(col),
         }
     }
+
+    pub fn count_distinct<C>(col: C) -> Func<C> {
+        Func {
+            kind: FuncKind::CountDistinct(col),
+        }
+    }
 }
 
 impl<Col: Column<C>, C: Context> Selection<C> for Func<Col> {
@@ -31,7 +38,12 @@ impl<Col: Column<C>, C: Context> Selection<C> for Func<Col> {
         match &self.kind {
             FuncKind::CountAll => write!(ctx, "COUNT(*)")?,
             FuncKind::Count(col) => {
-                ctx.write_char('(')?;
+                ctx.write_str("COUNT(")?;
+                <Col as Column<C>>::build(col, ctx)?; // col.build(ctx)?;
+                ctx.write_char(')')?;
+            }
+            FuncKind::CountDistinct(col) => {
+                ctx.write_str("COUNT(DISTINCT ")?;
                 <Col as Column<C>>::build(col, ctx)?; // col.build(ctx)?;
                 ctx.write_char(')')?;
             }
@@ -46,6 +58,11 @@ impl<Col: Column<C>, C: Context> Column<C> for Func<Col> {
             FuncKind::CountAll => write!(ctx, "COUNT(*)")?,
             FuncKind::Count(col) => {
                 ctx.write_str("COUNT(")?;
+                <Col as Column<C>>::build(col, ctx)?; // col.build(ctx)?;
+                ctx.write_char(')')?;
+            }
+            FuncKind::CountDistinct(col) => {
+                ctx.write_str("COUNT(DISTINCT ")?;
                 <Col as Column<C>>::build(col, ctx)?; // col.build(ctx)?;
                 ctx.write_char(')')?;
             }

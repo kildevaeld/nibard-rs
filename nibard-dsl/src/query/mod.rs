@@ -18,7 +18,7 @@ mod test {
     #[test]
     fn test() {
         let mut out = DefaultContext::new(Dialect::Sqlite);
-        "proifles"
+        let sql = "proifles"
             .select(("id", "name".column_alias("profile_name"), Func::count_all()))
             .join(Join::left("test").on("test".col("id").eql("profile.id".expr())))
             .boxed()

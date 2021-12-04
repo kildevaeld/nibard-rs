@@ -6,8 +6,9 @@ pub mod insert;
 pub mod query;
 mod statement;
 pub mod update;
+mod util;
 
-pub use self::{context::*, error::Error, statement::*};
+pub use self::{context::*, error::Error, statement::*, util::*};
 
 pub mod prelude {
     pub use super::query::{

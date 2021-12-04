@@ -1,5 +1,5 @@
-use super::{Expression, Table};
-use crate::{Context, Error};
+use super::Expression;
+use crate::{Context, Error, Table};
 
 pub trait Joinable<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;

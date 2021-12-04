@@ -1,7 +1,7 @@
 use super::{
-    Alias, Column, FilterSelect, JoinSelect, LimitedSelect, Sel, Select, Selection, Table, Target,
+    Alias, Column, FilterSelect, JoinSelect, LimitedSelect, Sel, Select, Selection, Target,
 };
-use crate::{Context, Error, Statement};
+use crate::{Context, Error, Statement, Table};
 use std::marker::PhantomData;
 
 pub trait TargetExt<C: Context>: Target<C> + Sized {

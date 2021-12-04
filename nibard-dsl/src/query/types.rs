@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use crate::{Context, Error, Table};
 
 pub trait Alias<C: Context> {
     fn build(&self, ctx: &mut C) -> Result<(), Error>;
@@ -33,7 +33,7 @@ pub trait Target<C: Context> {
 
 impl<'a, T, C: Context> Target<C> for &'a T
 where
-    T: Table<C>,
+    T: Target<C>,
 {
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         <T as Target<C>>::build(&**self, ctx)
@@ -116,18 +116,18 @@ selection!(
 
 // Table
 
-pub trait Table<C: Context>: Target<C> {
-    fn build(&self, ctx: &mut C) -> Result<(), Error>;
-}
+// pub trait Table<C: Context>: Target<C> {
+//     fn build(&self, ctx: &mut C) -> Result<(), Error>;
+// }
 
-impl<'a, T, C: Context> Table<C> for &'a T
-where
-    T: Table<C>,
-{
-    fn build(&self, ctx: &mut C) -> Result<(), Error> {
-        <T as Table<C>>::build(&**self, ctx)
-    }
-}
+// impl<'a, T, C: Context> Table<C> for &'a T
+// where
+//     T: Table<C>,
+// {
+//     fn build(&self, ctx: &mut C) -> Result<(), Error> {
+//         <T as Table<C>>::build(&**self, ctx)
+//     }
+// }
 
 // Selection
 

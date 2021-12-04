@@ -270,8 +270,6 @@ where
     S: Select<C>,
     J: Joinable<C>,
 {
-    // type Target = S::Target;
-    // type Selection = S::Selection;
     fn build(&self, ctx: &mut C) -> Result<(), Error> {
         self.select.build(ctx)?;
         ctx.write_str(" ")?;

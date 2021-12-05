@@ -1,3 +1,5 @@
+use crate::write_identifier;
+
 use super::error::Error;
 use nibard_shared::{Dialect, Value};
 use std::fmt::{self, Write};
@@ -7,6 +9,15 @@ pub trait Context: fmt::Write {
     fn push(&mut self, value: Value) -> Result<&mut Self, Error>;
 
     fn build(self) -> Result<(String, Vec<Value>), Error>;
+
+    fn push_identifier(&mut self, identifier: &str) -> Result<&mut Self, Error>
+    where
+        Self: Sized,
+    {
+        let dialect = *self.dialect();
+        write_identifier(identifier, &dialect, self)?;
+        Ok(self)
+    }
 }
 
 pub struct DefaultContext(Dialect, Vec<Value>, String);
